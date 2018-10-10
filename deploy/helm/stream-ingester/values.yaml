@@ -1,0 +1,36 @@
+replicaCount: 1
+
+image:
+  repository: us.gcr.io/liveplanet-cloud-staging/stream-ingester
+  tag: latest
+  pullPolicy: Always # IfNotPresent
+
+service:
+  name: http
+  type: NodePort
+  externalPort: 80
+  internalPort: 80
+
+rtmpService:
+  name: rtmp
+  type: LoadBalancer
+  externalPort: 1935
+  internalPort: 1935
+  loadBalancerIP: 
+
+resources:
+  limits:
+    cpu: 4000m
+    memory: 16384Mi
+  requests:
+    cpu: 4000m
+    memory: 16384Mi
+
+nodeSelector:
+  cloud.google.com/gke-nodepool: stream-ingester
+
+ingress:
+  staticIpName:
+  httpHost:
+  useTLS: true
+  annotations: {}

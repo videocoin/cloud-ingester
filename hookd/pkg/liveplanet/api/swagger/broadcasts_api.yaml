@@ -1,0 +1,136 @@
+swagger: '2.0'
+info:
+  version: "1.0"
+  title: Live Planet Broadcasts API
+  description: Live Planet Broadcasts API
+host: api.liveplanetstage.net
+basePath: /api/private/v1
+schemes:
+  - http
+  - https
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  /broadcasts:
+    get:
+      summary: Get broadcasts list
+      tags:
+        - Broadcasts
+      operationId: GetBroadcasts
+      responses:
+        "200":
+          description: success
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Broadcast'
+  /broadcasts/{id}/:
+    get:
+      summary: Get broadcast details
+      tags:
+        - Broadcasts
+      operationId: getBroadcastById
+      parameters:
+        - name: id
+          in: path
+          description: broadcast id
+          required: true
+          type: string
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/Broadcast'
+        "404":
+          description: not found
+    patch:
+      summary: Update broadcast
+      tags:
+        - Broadcasts
+      operationId: updateBroadcastById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+        - name: status
+          in: body
+          required: false
+          schema:
+            $ref: '#/definitions/UpdateBroadcastRequest'
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/Broadcast'
+definitions:
+  UpdateBroadcastRequest:
+    properties:
+      status:
+        type: string
+        enum:
+          - pending
+          - broadcasting
+          - canceled
+          - completed
+          - failed
+  Broadcast:
+    properties:
+      id:
+        type: string
+        description: broadcast unique id
+      platform_id:
+        type: string
+        description: platform id
+      stream_id:
+        type: integer
+        description: stream id
+      live_stream_id:
+        type: integer
+        description: live stream id
+      metadata:
+        type: object
+        description: schemaless payload
+      camera_id:
+        type: string
+        description: camera id
+      profile_id:
+        type: integer
+        description: platform profile id
+      event_id:
+        type: integer
+        description: event id
+      status:
+        type: string
+        enum:
+          - pending
+          - broadcasting
+          - canceled
+          - completed
+          - failed
+      url:
+        type: string
+        description: publication url
+      started_at:
+        type: string
+        format: date-time
+        description: broadcast start datetime
+      ended_at:
+        type: string
+        format: date-time
+        description: broadcast end datetime
+    required:
+      - id
+      - platform_id
+      - stream_id
+      - live_stream_id
+      - metadata
+      - camera_id
+      - profile_id
+      - event_id
+      - status
+      - url
+      - started_at
+      - ended_at

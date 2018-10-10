@@ -1,0 +1,46 @@
+swagger: '2.0'
+info:
+  version: "1.0"
+  title: Live Planet Private Users API
+  description: Live Planet Private Users API
+host: api.liveplanetstage.net
+basePath: /
+schemes:
+  - http
+  - https
+consumes:
+  - application/json
+produces:
+  - application/json
+securityDefinitions:
+  Token:
+    type: apiKey
+    name: Authorization
+    in: header
+paths:
+  /oauth/user/:
+    get:
+      summary: Check oauth2 token and exchange it for user object
+      tags:
+        - Users
+      operationId: GetUser
+      security:
+        - Token: []
+      responses:
+        "200":
+          description: success
+          schema:
+            type: object
+            items:
+              $ref: '#/definitions/User'
+        "401":
+          desciption: non authorized
+definitions:
+  User:
+    properties:
+      id:
+        type: integer
+        format: int64
+        description: unique id
+    required:
+      - id

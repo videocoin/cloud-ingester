@@ -1,0 +1,200 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+package proto;
+option go_package = "proto";
+option optimize_for = SPEED;
+
+service CameraCoreService {
+    rpc GetState (google.protobuf.Empty) returns (State) {}
+
+    rpc SetPreview (Preview) returns (Preview) {}
+    rpc SetOutput (Output) returns (Output) {}
+    rpc SetEncode (Encode) returns (Encode) {}
+    rpc SetQuality (Quality) returns (Quality) {}
+    rpc SetPicture (Picture) returns (Picture) {}
+    rpc ResetPicture (google.protobuf.Empty) returns (Picture) {}
+    rpc SetCurve (Curve) returns (Curve) {}
+    rpc SetStorage (Storage) returns (Storage) {}
+    rpc SetHDR(HDR) returns (HDR) {}
+    rpc SetFOV(FOV) returns (FOV) {}
+    rpc SetSoftware(Software) returns (Software) {}
+
+    rpc NotificationStreaming(stream google.protobuf.Empty) returns (stream Notification) {}
+
+    rpc Calibrate (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+    rpc GetCalibrations (google.protobuf.Empty) returns (Calibrations) {}
+    rpc SetCalibration (Calibration) returns (google.protobuf.Empty) {}
+    rpc SetDefaultCalibration (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+    rpc SaveCalibration(google.protobuf.Empty) returns (Calibration) {}
+
+    rpc GetAudioDevices (google.protobuf.Empty) returns (AudioDevices) {}
+    rpc SetAudioDevice (AudioDevice) returns (google.protobuf.Empty) {}
+
+    rpc Mount (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+    rpc Unmount (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+
+    rpc Shutdown(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+}
+
+message RTMPPoint {
+    string rtmp_address = 1;
+    string rtmps_address = 2;
+}
+
+message Preview {
+    enum PreviewType {
+        NONE = 0;
+        STEREO = 1;
+        MONO = 2;
+    }
+
+    PreviewType type = 1;
+}
+
+message Output {
+    enum OutputType {
+        OFF = 0;
+        HLS = 1;
+        FILE = 2;
+        RTMP = 3;
+        RTMP_CUSTOM = 4;
+    }
+
+    OutputType type = 1;
+    RTMPPoint primary = 2;
+    RTMPPoint secondary = 3;
+    
+    int64 start_timestamp = 8;
+}
+
+message Encode {
+    uint32 framerate = 1;
+    uint32 bitrate = 2;
+}
+
+message Quality {
+    enum QualityType {
+        NONE = 0;
+        LOW = 1;
+        MEDIUM = 2;
+        HIGH = 3;
+        ULTRA = 4;
+    }
+
+    QualityType type = 1;
+}
+
+message Point {
+    double x = 1;
+    double y = 2;
+}
+
+message Picture {
+    double exposure = 1;
+    double shadows = 2;
+    double temperature = 3;
+    double tint = 4;
+    double saturation = 5;
+}
+
+message Curve {
+    repeated double values = 1;
+    repeated Point cps = 2;
+}
+
+message Notification {
+    string text = 1;
+    uint32 timestamp = 2;
+
+    enum NotificationType {
+        NONE = 0;
+        SUCCESS = 1;
+        ERROR = 2;
+        WARNING = 3;
+        CALIBRATION_SUCCESS = 4;
+        CALIBRATION_FAILED = 5;
+        AUDIO_CHANGE = 6;
+        BUTTON_RECORD_FILE = 7;
+        BUTTON_SHUTDOWN = 8;
+    }
+
+    NotificationType type = 3;
+}
+
+message AudioDevice {
+    string id = 1;
+}
+
+message AudioDevices {
+    repeated AudioDevice devices = 1;
+    uint32 active_index = 2;
+}
+
+message Calibration {
+    string id = 1;
+}
+
+message Calibrations {
+    repeated Calibration calibrations = 1;
+    uint32 active_index = 2;
+}
+
+message HDR {
+    enum HDRType {
+        OFF = 0;
+        ON = 1;
+        AUTO = 2;
+    }
+    HDRType type = 1;
+}
+
+message Storage {
+    bool is_mounted = 1;
+    uint64 total = 2;
+    uint64 used = 3;
+}
+
+message WifiNetwork {
+    string ssid = 1;
+    string signal = 2;
+    string security = 3;
+    bool is_active = 4;
+}
+
+message Network {
+    bool eth_connected = 1;
+    repeated WifiNetwork wifi_networks = 4;
+}
+
+message Software {
+    string installed = 1;
+    string candidate = 2;
+}
+
+message FOV {
+    enum FOVMode {
+        FOV_MODE_360 = 0;
+        FOV_MODE_180 = 1;
+    }
+    FOVMode mode = 1;
+    uint32 offset = 2;
+}
+
+message State {
+    Preview preview = 1;
+    Output output = 2;
+    Encode encode = 3;
+    Picture picture = 4;
+    Curve curve = 5;
+    Notification notification = 6;
+    HDR hdr = 7;
+    Storage storage = 8;
+    Network network = 9;
+    AudioDevices audio_devices = 10;
+    Software software = 11;
+    Calibrations calibrations = 12;
+    FOV fov = 13;
+    Quality quality = 14;
+}

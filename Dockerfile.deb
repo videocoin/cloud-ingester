@@ -1,0 +1,22 @@
+FROM bitnami/minideb:jessie
+
+RUN apt-get update && apt-get install -y gettext-base wget bzip2
+
+ADD ./debian /release/stream-ingester/debian
+ADD ./debian /usr/src/stream-ingester/debian
+ADD ./build/release/stream-ingester /release/stream-ingester/debian/opt/stream-ingester
+ADD ./etc /release/stream-ingester/debian/opt/stream-ingester/etc
+ADD ./src /release/stream-ingester/debian/opt/stream-ingester/src
+
+ARG VERSION=0.0.1-dev
+RUN envsubst < /usr/src/stream-ingester/debian/DEBIAN/control > /release/stream-ingester/debian/DEBIAN/control
+
+RUN cd /tmp && \
+    wget https://storage.googleapis.com/liveplanet-releases/ffmpeg/master/ffmpeg-04dc3b4.tbz2 && \
+    tar xjf /tmp/ffmpeg-04dc3b4.tbz2 && \
+    cp ffmpeg /release/stream-ingester/debian/usr/bin/ffmpeg && \
+    cp -r lib/* /release/stream-ingester/debian/lib
+
+RUN chmod a+x /release/stream-ingester/debian/DEBIAN/preinst /release/stream-ingester/debian/DEBIAN/postinst
+RUN mkdir -p /pkg
+RUN dpkg-deb -b /release/stream-ingester/debian /pkg/liveplanet-cloud-stream-ingester-${VERSION}.deb

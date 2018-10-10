@@ -1,0 +1,8 @@
+Package: liveplanet-cloud-stream-ingester
+Architecture: amd64
+Maintainer: Live Planet
+Section: cloud
+Depends: debconf (>= 0.5.00)
+Priority: optional
+Version: ${VERSION}
+Description: Live Planet Cloud Stream Ingester

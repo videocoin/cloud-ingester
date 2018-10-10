@@ -1,0 +1,31 @@
+FROM bitnami/minideb:jessie
+
+RUN apt-get update && apt-get install -y \
+    dos2unix \
+    mercurial \
+    libreadline-dev \
+    libncurses5-dev \
+    libpcre3-dev \
+    libssl-dev \
+    perl \
+    make \
+    build-essential \
+    wget \
+    bzip2
+
+ADD ./ /usr/src/stream-ingester
+
+RUN cd /usr/src/stream-ingester/thirdparty/openresty && \
+    make all && \
+    OR_VER=`./util/ver` && \
+    cd ./openresty-${OR_VER} && \
+    ./configure \
+        --prefix=/opt/stream-ingester \
+        --with-debug \
+        --with-luajit \
+        --add-module=../../liveplanet-nginx-rtmp/ && \
+    make && \
+    make install
+
+RUN mkdir -p /release/stream-ingester
+RUN cp -r /opt/stream-ingester /release/stream-ingester

@@ -1,0 +1,17 @@
+#!/bin/sh
+# preinst script for live planet package
+#
+# see: dh_installdeb(1)
+
+set -e
+
+stop_service () {
+    SERVICE=$1
+    if [ "`systemctl list-unit-files | grep $SERVICE`" ]; then
+        systemctl stop $SERVICE
+    fi
+}
+
+stop_service stream-ingester-rtmp.service
+stop_service stream-ingester-http.service
+stop_service stream-ingester-hookd.service

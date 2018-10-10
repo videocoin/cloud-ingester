@@ -1,0 +1,36 @@
+version: 2
+jobs:
+
+  build_deb:
+    docker:
+      - image: docker:17.05.0-ce-git
+    working_directory: /tmp/project
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 17.05.0-ce
+          reusable: true
+          exclusive: true
+          docker_layer_caching: true
+      - run:
+          name: Install dependencies
+          command: |
+            apk update && \
+            apk add \
+              curl \
+              build-base \
+              python \
+              py-crcmod \
+              bash \
+              libc6-compat \
+              openssh-client
+      - run:
+          name: Update submodules
+          command: git submodule update --init --recursive --remote
+
+
+workflows:
+  version: 2
+  build_and_deploy:
+    jobs:
+      - build_deb

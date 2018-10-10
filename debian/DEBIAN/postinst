@@ -1,0 +1,45 @@
+#!/bin/sh
+# postinst script for live planet
+#
+# see: dh_installdeb(1)
+
+set -e
+
+enable_service () {
+    SERVICE=$1
+    if [ "`systemctl is-enabled $SERVICE`" != "enabled" ]; then
+        systemctl enable $SERVICE
+    fi
+}
+
+run_service () {
+    SERVICE=$1
+    systemctl restart $SERVICE
+}
+
+case "$1" in
+    configure)
+        mkdir -p /tmp/hls /tmp/records
+        chown www-data:www-data /tmp/hls /tmp/records
+        chmod a+x /opt/stream-ingester/src/scripts/exec_record_done.sh
+        chmod a+x /opt/stream-ingester/src/scripts/exec_publish_done.sh
+        systemctl daemon-reload
+        enable_service stream-ingester-rtmp.service
+        enable_service stream-ingester-http.service
+        enable_service stream-ingester-hookd.service
+        run_service stream-ingester-rtmp.service
+        run_service stream-ingester-http.service
+        run_service stream-ingester-hookd.service
+    ;;
+
+    abort-upgrade|abort-remove|abort-deconfigure)
+        exit 0
+    ;;
+
+    *)
+        echo "postinst called with unknown argument \`$1'" >&2
+        exit 1
+    ;;
+esac
+
+exit 0

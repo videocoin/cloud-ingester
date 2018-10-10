@@ -1,0 +1,22 @@
+[Unit]
+Description=Live Planet Cloud Stream Ingester (RTMP)
+After=multi-user.target syslog.target network.target remote-fs.target nss-lookup.target
+Wants=stream-ingester-hookd.service
+
+[Service]
+EnvironmentFile=/etc/environment
+Environment=LP_CAMERA_HTTPADDR=cameras-api-internal.default.svc.cluster.local:8021
+Environment=LP_MANAGER_ADDR=manager-api-internal.default.svc.cluster.local:8000
+WorkingDirectory=/opt/stream-ingester
+Type=forking
+ExecStartPre=/opt/stream-ingester/nginx/sbin/nginx -t
+ExecStart=/opt/stream-ingester/nginx/sbin/nginx -c /opt/stream-ingester/etc/stream-ingester-rtmp.conf
+Restart=always
+RestartSec=5s
+StartLimitInterval=0
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=stream-ingester-rtmp
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,88 @@
+syntax = "proto3";
+package proto;
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+option go_package = "proto";
+option optimize_for = SPEED;
+
+service MeteringService {
+  rpc GetResourceUsageGroupByEvents(ResourceUsageRequest) returns (ResourceUsagesResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/resources/events"
+    };
+  }
+
+  rpc GetResourceUsageByEvent(ResourceUsageRequest) returns (ResourceUsageResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/resources/events/{event_id}"
+    };
+  }
+
+  rpc GetResourceUsage(ResourceUsageRequest) returns (ResourceUsageResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/resources"
+    };
+  }
+}
+
+message ResourceUsageRequest {
+  uint64 user_id = 1 [(gogoproto.customname) = "UserID"];
+  google.protobuf.Timestamp from = 2 [(gogoproto.stdtime) = true];
+  google.protobuf.Timestamp to = 3 [(gogoproto.stdtime) = true];
+  uint64 event_id = 4;
+}
+
+message ResourceUsageResponse {
+  uint64 event_id = 1 [(gogoproto.customname) = "EventID"];
+  int64 cpu = 2 [(gogoproto.customname) = "CPU"];
+  int64 cdn = 3 [(gogoproto.customname) = "CDN"];
+  int64 storage = 4;
+  int64 storage_space = 5;
+}
+
+message ResourceUsagesResponse {
+  repeated ResourceUsageResponse items = 1;
+}
+
+message CPUUsage {
+  google.protobuf.Timestamp timestamp = 1 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+  uint64 user_id = 2 [(gogoproto.customname) = "UserID"];
+  uint64 event_id = 3 [(gogoproto.customname) = "EventID"];
+  string broadcast_id = 4 [(gogoproto.customname) = "BroadcastID"];
+  uint64 seconds = 5;
+}
+
+message CDNUsage {
+  google.protobuf.Timestamp timestamp = 1 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+  uint64 user_id = 2 [(gogoproto.customname) = "UserID"];
+  uint64 event_id = 3 [(gogoproto.customname) = "EventID"];
+  string broadcast_id = 4 [(gogoproto.customname) = "BroadcastID"];
+  uint64 bytes = 5;
+}
+
+message StorageUsage {
+  google.protobuf.Timestamp timestamp = 1 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+  uint64 user_id = 2 [(gogoproto.customname) = "UserID"];
+  uint64 event_id = 3 [(gogoproto.customname) = "EventID"];
+  string broadcast_id = 4 [(gogoproto.customname) = "BroadcastID"];
+  uint64 stream_id = 5 [(gogoproto.customname) = "StreamID"];
+
+  enum StreamType {
+    option (gogoproto.goproto_enum_prefix) = false;
+    option (gogoproto.enum_customname) = "ResourceType";
+
+    STREAM_TYPE_UNKNOWN = 0 [(gogoproto.enumvalue_customname) = "ResourceTypeUnknown"];
+    ORIGIN = 1 [(gogoproto.enumvalue_customname) = "ResourceTypeVODOrigin"];
+    PREVIEW = 2 [(gogoproto.enumvalue_customname) = "ResourceTypeVODPreview"];
+    PROCESSED = 3 [(gogoproto.enumvalue_customname) = "ResourceTypeVODProcessed"];
+    BROADCAST = 4 [(gogoproto.enumvalue_customname) = "ResourceTypeBroadcast"];
+    LIVE = 5 [(gogoproto.enumvalue_customname) = "ResourceTypeLive"];
+  }
+
+  StreamType stream_type = 6;
+
+  int64 bytes = 7;
+}
