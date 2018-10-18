@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo"
-	pb "github.com/reality-lab-networks/liveplanet-cloud-stream-ingester/hookd/pkg/liveplanet/api/proto"
 	"github.com/sirupsen/logrus"
+	pb "gitlab.videocoin.io/ingester/hookd/pkg/liveplanet/api/proto"
 )
 
 var (

@@ -37,7 +37,7 @@ build-hookd:
 	go build \
 		-ldflags="-w -s -X main.Version=${VERSION}" \
 		-o build/release/stream-ingester/bin/stream-ingester-hookd \
-		github.com/reality-lab-networks/liveplanet-cloud-stream-ingester/hookd
+		gitlab.videocoin.io/ingester/hookd
 
 build-deb:
 	docker build \

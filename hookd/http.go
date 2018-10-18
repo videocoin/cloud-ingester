@@ -3,9 +3,9 @@ package main
 import (
 	"github.com/labstack/echo"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/reality-lab-networks/liveplanet-cloud-stream-ingester/hookd/pkg/grpcclient"
-	pb "github.com/reality-lab-networks/liveplanet-cloud-stream-ingester/hookd/pkg/liveplanet/api/proto"
 	"github.com/sirupsen/logrus"
+	"gitlab.videocoin.io/ingester/hookd/pkg/grpcclient"
+	pb "gitlab.videocoin.io/ingester/hookd/pkg/liveplanet/api/proto"
 	"google.golang.org/grpc"
 )
 
