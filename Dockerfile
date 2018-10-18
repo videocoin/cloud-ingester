@@ -2,9 +2,9 @@ FROM bitnami/minideb:jessie as builder
 
 LABEL maintainer="Dmitry Serkin <dmitry@liveplanet.net>"
 
-ENV OPENRESTY_VERSION 1.13.6.2
-ENV OPENRESTY_URL https://github.com/openresty/openresty/archive
-ENV NGINX_RTMP_MODULE_VERSION 1.1.7.13
+ENV NGINX_VERSION 1.13.6
+ENV NGINX_URL https://github.com/nginx/nginx/archive
+ENV NGINX_RTMP_MODULE_VERSION 1.1.7.16
 ENV NGINX_RTMP_MODULE_URL https://github.com/reality-lab-networks/nginx-rtmp-module/archive
 
 # Install dependencies
@@ -25,38 +25,33 @@ RUN apt-get update && apt-get install -y \
     bzip2 && \
     rm -rf /var/lib/apt/lists/*
 
-# Download and decompress Openresty
-RUN mkdir -p /tmp/build/openresty && \
-    cd /tmp/build/openresty && \
-    wget --quiet -O openresty-${OPENRESTY_VERSION}.tar.gz ${OPENRESTY_URL}/v${OPENRESTY_VERSION}.tar.gz && \
-    tar -zxf openresty-${OPENRESTY_VERSION}.tar.gz && \
-    rm openresty-${OPENRESTY_VERSION}.tar.gz
+# ADD ./etc /usr/src/stream-ingester/etc
+# ADD ./var /usr/src/stream-ingester/var
+# ADD ./scripts /usr/src/stream-ingester/scripts
+
+# Download and decompress Nginx
+RUN mkdir -p /tmp/build/nginx
+RUN wget --quiet -O /tmp/build/nginx-${NGINX_VERSION}.tar.gz ${NGINX_URL}/release-${NGINX_VERSION}.tar.gz
+RUN tar -C /tmp/build/nginx -zxvf /tmp/build/nginx-${NGINX_VERSION}.tar.gz
+RUN rm /tmp/build/nginx-${NGINX_VERSION}.tar.gz
+RUN ls /tmp/build/nginx
 
 # Download and decompress RTMP module
-RUN mkdir -p /tmp/build/nginx-rtmp-module && \
-    cd /tmp/build/nginx-rtmp-module && \
-    wget --quiet -O nginx-rtmp-module-${NGINX_RTMP_MODULE_VERSION}.tar.gz ${NGINX_RTMP_MODULE_URL}/v${NGINX_RTMP_MODULE_VERSION}.tar.gz && \
-    tar -zxf nginx-rtmp-module-${NGINX_RTMP_MODULE_VERSION}.tar.gz && \
-    rm nginx-rtmp-module-${NGINX_RTMP_MODULE_VERSION}.tar.gz
-
-ADD ./ /usr/src/stream-ingester
+RUN mkdir -p /tmp/build/nginx-rtmp-module
+RUN wget --quiet -O /tmp/build/nginx-rtmp-module/nginx-rtmp-module-${NGINX_RTMP_MODULE_VERSION}.tar.gz ${NGINX_RTMP_MODULE_URL}/v${NGINX_RTMP_MODULE_VERSION}.tar.gz
+RUN tar -C /tmp/build/nginx-rtmp-module -zxf /tmp/build/nginx-rtmp-module/nginx-rtmp-module-${NGINX_RTMP_MODULE_VERSION}.tar.gz
+RUN rm /tmp/build/nginx-rtmp-module/nginx-rtmp-module-${NGINX_RTMP_MODULE_VERSION}.tar.gz
 
 # Download FFMPEG binary
-RUN cd /tmp && \
-    wget --quiet https://storage.googleapis.com/liveplanet-releases/ffmpeg/master/ffmpeg-04dc3b4.tbz2 && \
-    tar xjf /tmp/ffmpeg-04dc3b4.tbz2 && \
-    cp ffmpeg /usr/bin/ffmpeg && \
-    cp -r lib/* /lib
+RUN cd /tmp
+RUN wget --quiet -O /tmp/ffmpeg-04dc3b4.tbz2 https://storage.googleapis.com/liveplanet-releases/ffmpeg/master/ffmpeg-04dc3b4.tbz2
+RUN tar xjf /tmp/ffmpeg-04dc3b4.tbz2
+RUN cp ffmpeg /usr/bin/ffmpeg
+# RUN cp -r lib/* /lib
 
-# Build OpenResty
-RUN cd /tmp/build/openresty/openresty-${OPENRESTY_VERSION} && \
-    make all && \
-    cd ./openresty-${OPENRESTY_VERSION} && \
-    ./configure \
-	--prefix=/opt/stream-ingester \
-	--with-debug \
-	--with-luajit \
-	--add-module=/tmp/build/nginx-rtmp-module/nginx-rtmp-module-${NGINX_RTMP_MODULE_VERSION} && \
+# Build nginx
+RUN cd /tmp/build/nginx/nginx-release-${NGINX_VERSION} && \
+    auto/configure --prefix=/opt/stream-ingester --with-debug --with-http_ssl_module --add-module=/tmp/build/nginx-rtmp-module/nginx-rtmp-module-${NGINX_RTMP_MODULE_VERSION} && \
     make && \
     make install
 
@@ -78,8 +73,8 @@ RUN apt-get update && \
     libssl1.0.0 && \
     rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /tmp/records
-RUN chown www-data /tmp/records
+RUN mkdir -p /tmp/records /var/log/stream-ingester
+RUN chown www-data /tmp/records /var/log/stream-ingester
 
 EXPOSE 80
 EXPOSE 1935
