@@ -105,14 +105,14 @@ data:
         # internal;
         add_header Content-Type application/json;
         rtmp_stat all;
-        rtmp_stat_format json;
+        # rtmp_stat_format json;
     }
 
     location /stat.xml {
         # internal;
         add_header Content-Type application/xml;
         rtmp_stat all;
-        rtmp_stat_format xml;
+        # rtmp_stat_format xml;
     }
 
     location /monitor {

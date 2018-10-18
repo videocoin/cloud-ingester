@@ -25,9 +25,9 @@ RUN apt-get update && apt-get install -y \
     bzip2 && \
     rm -rf /var/lib/apt/lists/*
 
-# ADD ./etc /usr/src/stream-ingester/etc
-# ADD ./var /usr/src/stream-ingester/var
-# ADD ./scripts /usr/src/stream-ingester/scripts
+WORKDIR /opt/
+
+ADD . ./
 
 # Download and decompress Nginx
 RUN mkdir -p /tmp/build/nginx
@@ -58,9 +58,9 @@ RUN cd /tmp/build/nginx/nginx-release-${NGINX_VERSION} && \
 FROM bitnami/minideb:jessie
 
 COPY --from=builder /opt /opt
-COPY --from=builder /usr/src/stream-ingester/etc /opt/stream-ingester/etc
-COPY --from=builder /usr/src/stream-ingester/src /opt/stream-ingester/src
-COPY --from=builder /usr/src/stream-ingester/var /opt/stream-ingester/var
+COPY --from=builder /opt/etc /opt/stream-ingester/etc
+COPY --from=builder /opt//src /opt/stream-ingester/src
+COPY --from=builder /opt/var /opt/stream-ingester/var
 COPY --from=builder /usr/bin/ffmpeg /usr/bin/ffmpeg
 COPY --from=builder /lib /lib
 
@@ -81,7 +81,7 @@ EXPOSE 1935
 
 RUN mkdir -p /var/log/stream-ingester
 
-ENV PATH="/opt/stream-ingester/nginx/sbin:${PATH}"
+ENV PATH="/opt/stream-ingester/sbin:${PATH}"
 
 ENTRYPOINT ["nginx"]
 CMD ["-c", "/opt/stream-ingester/etc/nginx.develop.conf", "-g", "daemon off;"] 

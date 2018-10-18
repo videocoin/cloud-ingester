@@ -1,11 +1,11 @@
 APP_NAME?=stream-ingester
 VERSION?=$$(git describe --abbrev=0)-$$(git rev-parse --short HEAD)
-GOOGLE_PROJECT?=liveplanet-cloud-staging
+GOOGLE_PROJECT?=videocoin
 DOCKER_REGISTRY?=us.gcr.io
 IMAGE_TAG=${DOCKER_REGISTRY}/${GOOGLE_PROJECT}/${APP_NAME}:${VERSION}
-PACKAGE_FILENAME=liveplanet-cloud-stream-ingester-${VERSION}.deb
+PACKAGE_FILENAME=ingester-${VERSION}.deb
 DEB_REPO_PASSWORD?=
-REPO_ADDR?=http://aptly.liveplanetstage.net
+REPO_ADDR?=http://aptly.videocoin.io
 
 GOOS?=linux
 GOARCH?=amd64
