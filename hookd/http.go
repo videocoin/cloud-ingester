@@ -1,4 +1,4 @@
-package main
+package hookd
 
 import (
 	"github.com/labstack/echo"

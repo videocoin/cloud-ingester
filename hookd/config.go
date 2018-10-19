@@ -1,4 +1,4 @@
-package main
+package hookd
 
 import (
 	"fmt"
@@ -18,7 +18,7 @@ type Config struct {
 	Logger *logrus.Entry `ignored:"true"`
 }
 
-func (c *Config) initLogger() error {
+func (c *Config) InitLogger() error {
 	level, err := logrus.ParseLevel(c.Loglevel)
 	if err != nil {
 		return fmt.Errorf("not a valid log level: %q", c.Loglevel)

@@ -7,17 +7,18 @@ import (
 
 	"github.com/kelseyhightower/envconfig"
 	"github.com/sirupsen/logrus"
+	"gitlab.videocoin.io/ingester/hookd"
 )
 
 func main() {
-	var config Config
+	var config hookd.Config
 
 	err := envconfig.Process("LP_STREAMINGESTER_HOOK", &config)
 	if err != nil {
 		logrus.Fatal(err)
 	}
 
-	err = config.initLogger()
+	err = config.InitLogger()
 	if err != nil {
 		logrus.Fatal(err)
 	}
@@ -36,7 +37,7 @@ func main() {
 
 	errCh := make(chan error, 1)
 
-	service, err := NewService(&config)
+	service, err := hookd.NewService(&config)
 	if err != nil {
 		config.Logger.Fatal(err)
 	}

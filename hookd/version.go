@@ -1,4 +1,4 @@
-package main
+package hookd
 
 var (
 	Name    string = "streamingester-hooks"
