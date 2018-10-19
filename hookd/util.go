@@ -2,6 +2,7 @@ package hookd
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -36,6 +37,8 @@ func ParseStreamName(name string) (*StreamInfo, error) {
 
 	streamInfo.UserID = uint32(userID)
 	streamInfo.CameraID = parts[1]
+
+	fmt.Printf("%+v", parts)
 
 	if streamInfo.UserID == 0 {
 		return nil, ErrInvalidUserID

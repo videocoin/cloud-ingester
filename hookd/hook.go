@@ -92,23 +92,11 @@ func (h *Hook) handlePublish(r *http.Request) error {
 	logger.Info("getting user profile")
 
 	ctx := context.Background()
-	tokenReq := &pb.OAuth2TokenRequest{
-		UserId: streamInfo.UserID,
-		AppId:  "web",
-	}
-	tokenResp, err := h.profile.GetOAuth2Token(ctx, tokenReq)
-	if err != nil {
-		logger.Errorf("failed to get oath2 token: %s", err)
-		return ErrBadRequest
-	}
-
-	logger.Debugf("token response: %+v", tokenResp)
 
 	logger.Info("marking camera as on air")
 
 	cameraReq := &pb.InternalCameraRequest{
-		ID:      streamInfo.CameraID,
-		OwnerID: tokenResp.UserId,
+		ID: streamInfo.CameraID,
 	}
 	cameraResp, err := h.cameras.MarkCameraAsOnAir(ctx, cameraReq)
 	if err != nil {

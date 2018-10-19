@@ -9,10 +9,10 @@ import (
 )
 
 type Config struct {
-	Loglevel           string `default:"INFO" envconfig:"LOGLEVEL"`
+	Loglevel           string `default:"INFO" envconfig:"LOG_LEVEL"`
 	Addr               string `default:"127.0.0.1:8888"`
-	UserProfileRpcAddr string `required:"true" default:"127.0.0.1:7001"`
-	CamerasRpcAddr     string `required:"true" default:"127.0.0.1:8019"`
+	UserProfileRPCADDR string `required:"true" default:"127.0.0.1:7001"`
+	CamerasRPCADDR     string `required:"true" default:"127.0.0.1:8019"`
 	SentryDSN          string `required:"false"`
 
 	Logger *logrus.Entry `ignored:"true"`

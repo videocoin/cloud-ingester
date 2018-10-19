@@ -13,8 +13,8 @@ type Service struct {
 func NewService(cfg *Config) (*Service, error) {
 	httpServerCfg := &HTTPServerConfig{
 		Addr:               cfg.Addr,
-		UserProfileRpcAddr: cfg.UserProfileRpcAddr,
-		CamerasRpcAddr:     cfg.CamerasRpcAddr,
+		UserProfileRpcAddr: cfg.UserProfileRPCADDR,
+		CamerasRpcAddr:     cfg.CamerasRPCADDR,
 	}
 	httpServer, err := NewHTTPServer(
 		httpServerCfg,
