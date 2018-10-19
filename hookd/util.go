@@ -1,24 +1,26 @@
 package hookd
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 )
 
+// Common ingest errors
 var (
-	ErrEmptyStream     = errors.New("stream is empty")
-	ErrInvalidStream   = errors.New("invalid stream name")
-	ErrInvalidUserID   = errors.New("invalid user id")
-	ErrInvalidCameraID = errors.New("invalid camera id")
+	ErrEmptyStream     = fmt.Errorf("stream is empty")
+	ErrInvalidStream   = fmt.Errorf("invalid stream name")
+	ErrInvalidUserID   = fmt.Errorf("invalid user id")
+	ErrInvalidCameraID = fmt.Errorf("invalid camera id")
 )
 
+// StreamInfo used to parsing incoming rtmp stream
 type StreamInfo struct {
 	UserID   uint32
 	CameraID string
 }
 
+// ParseStreamName parses stream info from rtmp url
 func ParseStreamName(name string) (*StreamInfo, error) {
 	if name == "" {
 		return nil, ErrEmptyStream

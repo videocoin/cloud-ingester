@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// Config all required config for hookd project
 type Config struct {
 	Loglevel           string `default:"INFO" envconfig:"LOG_LEVEL"`
 	Addr               string `default:"127.0.0.1:8888"`
@@ -18,6 +19,7 @@ type Config struct {
 	Logger *logrus.Entry `ignored:"true"`
 }
 
+// InitLogger configures shared logger
 func (c *Config) InitLogger() error {
 	level, err := logrus.ParseLevel(c.Loglevel)
 	if err != nil {
