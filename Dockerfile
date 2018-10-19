@@ -25,9 +25,9 @@ RUN apt-get update && apt-get install -y \
     bzip2 && \
     rm -rf /var/lib/apt/lists/*
 
-# ADD ./etc /usr/src/stream-ingester/etc
-# ADD ./var /usr/src/stream-ingester/var
-# ADD ./scripts /usr/src/stream-ingester/scripts
+ADD /etc /usr/src/stream-ingester/etc
+ADD /var /usr/src/stream-ingester/var
+ADD /src/scripts /usr/src/stream-ingester/scripts
 
 # Download and decompress Nginx
 RUN mkdir -p /tmp/build/nginx
