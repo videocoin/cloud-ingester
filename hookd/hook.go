@@ -2,7 +2,7 @@ package hookd
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo"
@@ -10,12 +10,13 @@ import (
 	pb "gitlab.videocoin.io/ingester/hookd/pkg/liveplanet/api/proto"
 )
 
+// Common hook errors
 var (
-	ErrUnknownHook = errors.New("unknown hook")
-
-	ErrBadRequest = echo.NewHTTPError(http.StatusBadRequest)
+	ErrUnknownHook = fmt.Errorf("unknown hook")
+	ErrBadRequest  = echo.NewHTTPError(http.StatusBadRequest)
 )
 
+// Hook struct used for managing hooks
 type Hook struct {
 	e       *echo.Echo
 	logger  *logrus.Entry
@@ -23,6 +24,7 @@ type Hook struct {
 	cameras pb.CameraCloudInternalServiceClient
 }
 
+// NewHook returns new hook reference
 func NewHook(
 	e *echo.Echo,
 	prefix string,
