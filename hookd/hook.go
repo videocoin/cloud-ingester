@@ -100,11 +100,11 @@ func (h *Hook) handlePublish(r *http.Request) error {
 	cameraReq := &pb.InternalCameraRequest{
 		ID: streamInfo.CameraID,
 	}
-	cameraResp, err := h.cameras.MarkCameraAsOnAir(ctx, cameraReq)
-	if err != nil {
-		logger.Errorf("failed to mark camera as on air: %s", err)
-		return ErrBadRequest
-	}
+	cameraResp, _ := h.cameras.MarkCameraAsOnAir(ctx, cameraReq)
+	// if err != nil {
+	// 	logger.Errorf("failed to mark camera as on air: %s", err)
+	// 	return ErrBadRequest
+	// }
 
 	logger.Debugf("camera response: %+v", cameraResp)
 
