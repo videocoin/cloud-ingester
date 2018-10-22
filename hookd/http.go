@@ -9,10 +9,11 @@ import (
 	"google.golang.org/grpc"
 )
 
+// HTTPServerConfig addresses for http server
 type HTTPServerConfig struct {
 	Addr               string
-	UserProfileRpcAddr string
-	CamerasRpcAddr     string
+	UserProfileRPCADDR string
+	CamerasRPCADDR     string
 }
 
 type httpServer struct {
@@ -22,15 +23,16 @@ type httpServer struct {
 	hook   *Hook
 }
 
+// NewHTTPServer returns reference to new httpServer object
 func NewHTTPServer(cfg *HTTPServerConfig, logger *logrus.Entry) (*httpServer, error) {
 	grpcDialOpts := grpcclient.DialOpts(logger)
-	upConn, err := grpc.Dial(cfg.UserProfileRpcAddr, grpcDialOpts...)
+	upConn, err := grpc.Dial(cfg.UserProfileRPCADDR, grpcDialOpts...)
 	if err != nil {
 		return nil, err
 	}
 	profiles := pb.NewUserProfileServiceClient(upConn)
 
-	camerasConn, err := grpc.Dial(cfg.CamerasRpcAddr, grpcDialOpts...)
+	camerasConn, err := grpc.Dial(cfg.CamerasRPCADDR, grpcDialOpts...)
 	if err != nil {
 		return nil, err
 	}
