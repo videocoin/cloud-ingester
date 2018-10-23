@@ -5,7 +5,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 	"gitlab.videocoin.io/ingester/hookd/pkg/grpcclient"
-	pb "gitlab.videocoin.io/ingester/hookd/pkg/liveplanet/api/proto"
+	pb "gitlab.videocoin.io/videocoin/common/proto"
 	"google.golang.org/grpc"
 )
 

@@ -78,7 +78,7 @@ func (h *Hook) handleHook(c echo.Context) error {
 
 func (h *Hook) handlePublish(r *http.Request) error {
 	logger := h.logger.WithField("hook", "publish")
-	logger.Info("handling hook")
+	logger.Info("handling publish hook")
 
 	streamInfo, err := ParseStreamName(r.FormValue("name"))
 	if err != nil {
