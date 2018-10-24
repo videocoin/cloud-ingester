@@ -7,7 +7,7 @@ import (
 
 	"github.com/kelseyhightower/envconfig"
 	"github.com/sirupsen/logrus"
-	"gitlab.videocoin.io/ingester/hookd"
+	"gitlab.videocoin.io/videocoin/ingester/hookd"
 )
 
 func main() {

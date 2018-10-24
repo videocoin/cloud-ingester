@@ -22,6 +22,7 @@ type Hook struct {
 	logger  *logrus.Entry
 	profile pb.UserProfileServiceClient
 	cameras pb.CameraCloudInternalServiceClient
+	manager pb.ManagerServiceClient
 }
 
 // NewHook returns new hook reference
@@ -100,13 +101,13 @@ func (h *Hook) handlePublish(r *http.Request) error {
 	cameraReq := &pb.InternalCameraRequest{
 		ID: streamInfo.CameraID,
 	}
-	cameraResp, _ := h.cameras.MarkCameraAsOnAir(ctx, cameraReq)
-	// if err != nil {
-	// 	logger.Errorf("failed to mark camera as on air: %s", err)
-	// 	return ErrBadRequest
-	// }
 
-	logger.Debugf("camera response: %+v", cameraResp)
+	managerResp, err := h.manager.CreateStream(ctx, pb.CreateStreamRequest{
+		ApplicationId: streamInfo.CameraID,
+		UserId:        int32(streamInfo.UserID),
+	})
+
+	logger.Debugf("manager response: %+v", managerResp)
 
 	return nil
 }
