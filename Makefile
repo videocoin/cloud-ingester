@@ -33,6 +33,7 @@ deploy:
 
 build-hookd:
 	@echo "==> Building..."
+	cd hookd/cmd
 	GOOS=${GOOS} GOARCH=${GOARCH} \
 	go build \
 		-ldflags="-w -s -X main.Version=${VERSION}" \

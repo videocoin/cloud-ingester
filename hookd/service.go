@@ -17,6 +17,7 @@ func NewService(cfg *Config) (*Service, error) {
 		Addr:               cfg.Addr,
 		UserProfileRPCADDR: cfg.UserProfileRPCADDR,
 		CamerasRPCADDR:     cfg.CamerasRPCADDR,
+		ManagerRPCADDR:     cfg.ManagerRPCADDR,
 	}
 	httpServer, err := NewHTTPServer(
 		httpServerCfg,

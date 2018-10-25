@@ -10,10 +10,11 @@ import (
 
 // Config all required config for hookd project
 type Config struct {
-	Loglevel           string `default:"INFO" envconfig:"LOG_LEVEL"`
-	Addr               string `default:"127.0.0.1:8888"`
 	UserProfileRPCADDR string `required:"true" default:"127.0.0.1:7001"`
+	Addr               string `required:"true" default:"127.0.0.1:8888"`
+	Loglevel           string `required:"true" default:"DEBUG" envconfig:"LOG_LEVEL"`
 	CamerasRPCADDR     string `required:"true" default:"127.0.0.1:8019"`
+	ManagerRPCADDR     string `required:"true" default:"127.0.0.1:50051"`
 	SentryDSN          string `required:"false"`
 
 	Logger *logrus.Entry `ignored:"true"`

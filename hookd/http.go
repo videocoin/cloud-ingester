@@ -4,8 +4,8 @@ import (
 	"github.com/labstack/echo"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
-	"gitlab.videocoin.io/videocoin/ingester/hookd/pkg/grpcclient"
 	pb "gitlab.videocoin.io/videocoin/common/proto"
+	"gitlab.videocoin.io/videocoin/ingester/hookd/pkg/grpcclient"
 	"google.golang.org/grpc"
 )
 
@@ -14,6 +14,7 @@ type HTTPServerConfig struct {
 	Addr               string
 	UserProfileRPCADDR string
 	CamerasRPCADDR     string
+	ManagerRPCADDR     string
 }
 
 type httpServer struct {
@@ -38,6 +39,12 @@ func NewHTTPServer(cfg *HTTPServerConfig, logger *logrus.Entry) (*httpServer, er
 	}
 	cameras := pb.NewCameraCloudInternalServiceClient(camerasConn)
 
+	managerConn, err := grpc.Dial(cfg.ManagerRPCADDR, grpcDialOpts...)
+	if err != nil {
+		return nil, err
+	}
+	manager := pb.NewManagerServiceClient(managerConn)
+
 	e := echo.New()
 	e.HideBanner = true
 	e.HidePort = true
@@ -51,6 +58,7 @@ func NewHTTPServer(cfg *HTTPServerConfig, logger *logrus.Entry) (*httpServer, er
 		e,
 		"/hook",
 		profiles,
+		manager,
 		cameras,
 		logger.WithField("system", "hook"),
 	)
