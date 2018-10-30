@@ -17,15 +17,17 @@ type HTTPServerConfig struct {
 	ManagerRPCADDR     string
 }
 
-type httpServer struct {
+// HTTPServer http server reciver
+// holds echo, config, and logger objects
+type HTTPServer struct {
 	cfg    *HTTPServerConfig
 	e      *echo.Echo
 	logger *logrus.Entry
 	hook   *Hook
 }
 
-// NewHTTPServer returns reference to new httpServer object
-func NewHTTPServer(cfg *HTTPServerConfig, logger *logrus.Entry) (*httpServer, error) {
+// NewHTTPServer returns reference to new HTTPServer object
+func NewHTTPServer(cfg *HTTPServerConfig, logger *logrus.Entry) (*HTTPServer, error) {
 	grpcDialOpts := grpcclient.DialOpts(logger)
 	upConn, err := grpc.Dial(cfg.UserProfileRPCADDR, grpcDialOpts...)
 	if err != nil {
@@ -66,7 +68,7 @@ func NewHTTPServer(cfg *HTTPServerConfig, logger *logrus.Entry) (*httpServer, er
 		return nil, err
 	}
 
-	return &httpServer{
+	return &HTTPServer{
 		cfg:    cfg,
 		e:      e,
 		logger: logger,
@@ -74,12 +76,14 @@ func NewHTTPServer(cfg *HTTPServerConfig, logger *logrus.Entry) (*httpServer, er
 	}, nil
 }
 
-func (s *httpServer) Start() error {
+// Start starts echo server
+func (s *HTTPServer) Start() error {
 	s.logger.Infof("http server listening on %s", s.cfg.Addr)
 	return s.e.Start(s.cfg.Addr)
 }
 
-func (s *httpServer) Stop() error {
+// Stop does nothing
+func (s *HTTPServer) Stop() error {
 	s.logger.Infof("stopping http server")
 	return nil
 }

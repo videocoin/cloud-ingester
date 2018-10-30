@@ -8,7 +8,7 @@ import (
 type Service struct {
 	logger     *logrus.Entry
 	cfg        *Config
-	httpServer *httpServer
+	HTTPServer *HTTPServer
 }
 
 // NewService returns new	ingest hook service
@@ -19,7 +19,7 @@ func NewService(cfg *Config) (*Service, error) {
 		CamerasRPCADDR:     cfg.CamerasRPCADDR,
 		ManagerRPCADDR:     cfg.ManagerRPCADDR,
 	}
-	httpServer, err := NewHTTPServer(
+	HTTPServer, err := NewHTTPServer(
 		httpServerCfg,
 		cfg.Logger.WithField("system", "http-server"),
 	)
@@ -30,18 +30,18 @@ func NewService(cfg *Config) (*Service, error) {
 	return &Service{
 		logger:     cfg.Logger,
 		cfg:        cfg,
-		httpServer: httpServer,
+		HTTPServer: HTTPServer,
 	}, nil
 }
 
 // Start runs http server
 func (s *Service) Start() error {
-	go s.httpServer.Start()
+	go s.HTTPServer.Start()
 	return nil
 }
 
 // Stop stops the http server from service
 func (s *Service) Stop() error {
-	s.httpServer.Stop()
+	s.HTTPServer.Stop()
 	return nil
 }

@@ -50,7 +50,7 @@ func (h *Hook) handleHook(c echo.Context) error {
 
 	err := req.ParseForm()
 	if err != nil {
-		h.logger.Error("failed to parse form: %s", err)
+		h.logger.Errorf("failed to parse form: %s", err)
 		return ErrBadRequest
 	}
 
