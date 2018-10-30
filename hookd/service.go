@@ -14,10 +14,8 @@ type Service struct {
 // NewService returns new	ingest hook service
 func NewService(cfg *Config) (*Service, error) {
 	httpServerCfg := &HTTPServerConfig{
-		Addr:               cfg.Addr,
-		UserProfileRPCADDR: cfg.UserProfileRPCADDR,
-		CamerasRPCADDR:     cfg.CamerasRPCADDR,
-		ManagerRPCADDR:     cfg.ManagerRPCADDR,
+		Addr:           cfg.Addr,
+		ManagerRPCADDR: cfg.ManagerRPCADDR,
 	}
 	HTTPServer, err := NewHTTPServer(
 		httpServerCfg,
@@ -26,7 +24,6 @@ func NewService(cfg *Config) (*Service, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return &Service{
 		logger:     cfg.Logger,
 		cfg:        cfg,
