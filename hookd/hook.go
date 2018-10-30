@@ -104,7 +104,7 @@ func (h *Hook) handlePublish(r *http.Request) error {
 	// 	ID: streamInfo.CameraID,
 	// }
 
-	managerResp, err := h.manager.CreateStream(ctx, &pb.CreateStreamRequest{
+	managerResp, err := h.manager.CreateStream(ctx, &pb.StreamRequest{
 		ApplicationId: streamInfo.CameraID,
 		UserId:        int32(streamInfo.UserID),
 		StreamId:      "cameracamera",

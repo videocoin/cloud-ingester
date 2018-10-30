@@ -1,26 +1,18 @@
-FROM golang:latest AS builder
+FROM golang:1.11-rc-alpine AS builder
 
-RUN apt update && apt upgrade -y
+RUN apk update && apk add --update build-base alpine-sdk musl-dev musl
 
-WORKDIR /opt/
-
-ARG SSH_PRIVATE_KEY
-RUN mkdir /root/.ssh/
-RUN echo ${SSH_PRIVATE_KEY} > /root/.ssh/id_rsa
-RUN echo "    IdentityFile /root/.ssh/id_rsa" >> /etc/ssh/ssh_config
-RUN echo " Host gitlab.videocoin.io" >> /root/.ssh/config
-RUN touch /root/.ssh/known_hosts
-RUN chmod 600 /root/.ssh/id_rsa
-RUN ssh-keyscan gitlab.videocoin.io >> /root/.ssh/known_hosts
+WORKDIR /go/src/gitlab.videocoin.io/videocoin/ingester/hookd
 
 ADD . ./
 
+ENV GO111MODULE off
 
-RUN make build
+RUN make build-alpine
 
-FROM ubuntu:latest AS release
+FROM alpine:latest AS release
 
-COPY --from=builder /opt/bin/hookd ./
+COPY --from=builder /go/src/gitlab.videocoin.io/videocoin/ingester/hookd/bin/hookd ./
 
 ENTRYPOINT ./hookd
 
