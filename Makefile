@@ -3,6 +3,7 @@ VERSION?=$$(git describe --abbrev=0)-$$(git rev-parse --short HEAD)
 GOOGLE_PROJECT?=videocoin
 DOCKER_REGISTRY?=us.gcr.io
 IMAGE_TAG=${DOCKER_REGISTRY}/${GOOGLE_PROJECT}/${APP_NAME}:${VERSION}
+LATEST=${DOCKER_REGISTRY}/${GOOGLE_PROJECT}/${APP_NAME}:latest
 PACKAGE_FILENAME=ingester-${VERSION}.deb
 DEB_REPO_PASSWORD?=
 REPO_ADDR?=http://aptly.videocoin.io
@@ -20,7 +21,7 @@ version:
 	@echo ${VERSION}
 
 build-docker-image:
-	docker build -t ${IMAGE_TAG} .
+	docker build -t ${IMAGE_TAG} -t ${LATEST} .
 
 push-docker-image:
 	gcloud docker -- push ${IMAGE_TAG}
