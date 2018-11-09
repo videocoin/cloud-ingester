@@ -87,13 +87,13 @@ func Start() {
 
 }
 
-// Start runs http server
+// StartHTTP runs http server
 func (s *Service) StartHTTP() error {
 	go s.HTTPServer.Start()
 	return nil
 }
 
-// Stop stops the http server from service
+// StopHTTP stops the http server from service
 func (s *Service) StopHTTP() error {
 	s.HTTPServer.Stop()
 	return nil
