@@ -25,9 +25,9 @@ RUN apt-get update && apt-get install -y \
     bzip2 && \
     rm -rf /var/lib/apt/lists/*
 
-ADD /etc /usr/src/stream-ingester/etc
-ADD /var /usr/src/stream-ingester/var
-ADD /src/scripts /usr/src/stream-ingester/scripts
+WORKDIR /opt/
+
+ADD . ./
 
 # Download and decompress Nginx
 RUN mkdir -p /tmp/build/nginx
@@ -55,7 +55,7 @@ RUN cd /tmp/build/nginx/nginx-release-${NGINX_VERSION} && \
     make && \
     make install
 
-FROM bitnami/minideb:jessie
+FROM bitnami/minideb:jessie AS release
 
 COPY --from=builder /opt /opt
 COPY --from=builder /usr/src/stream-ingester/etc /opt/stream-ingester/etc
@@ -78,6 +78,7 @@ RUN chown www-data /tmp/records /var/log/stream-ingester
 
 EXPOSE 80
 EXPOSE 1935
+EXPOSE 8888
 
 RUN mkdir -p /var/log/stream-ingester
 
