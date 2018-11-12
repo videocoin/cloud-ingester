@@ -58,9 +58,9 @@ RUN cd /tmp/build/nginx/nginx-release-${NGINX_VERSION} && \
 FROM bitnami/minideb:jessie AS release
 
 COPY --from=builder /opt /opt
-COPY --from=builder /usr/src/stream-ingester/etc /opt/stream-ingester/etc
-COPY --from=builder /usr/src/stream-ingester/src /opt/stream-ingester/src
-COPY --from=builder /usr/src/stream-ingester/var /opt/stream-ingester/var
+COPY --from=builder /opt/etc /opt/stream-ingester/etc
+COPY --from=builder /opt/src /opt/stream-ingester/src
+COPY --from=builder /opt/var /opt/stream-ingester/var
 COPY --from=builder /usr/bin/ffmpeg /usr/bin/ffmpeg
 COPY --from=builder /lib /lib
 
