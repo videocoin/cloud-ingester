@@ -1,6 +1,6 @@
-APP_NAME?=stream-ingester
-VERSION?=$$(git describe --abbrev=0)-$$(git rev-parse --short HEAD)
-GOOGLE_PROJECT?=videocoin
+APP_NAME?=ingester
+VERSION?=$$(git rev-parse --short HEAD)
+GOOGLE_PROJECT?=videocoin-183500
 DOCKER_REGISTRY?=us.gcr.io
 IMAGE_TAG=${DOCKER_REGISTRY}/${GOOGLE_PROJECT}/${APP_NAME}:${VERSION}
 LATEST=${DOCKER_REGISTRY}/${GOOGLE_PROJECT}/${APP_NAME}:latest
@@ -25,6 +25,7 @@ build-docker-image:
 
 push-docker-image:
 	gcloud docker -- push ${IMAGE_TAG}
+	gcloud docker -- push ${LATEST}
 
 docker-image-tag:
 	@echo ${IMAGE_TAG}

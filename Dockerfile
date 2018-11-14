@@ -82,7 +82,7 @@ EXPOSE 8888
 
 RUN mkdir -p /var/log/stream-ingester
 
-ENV PATH="/opt/stream-ingester/nginx/sbin:${PATH}"
+ENV PATH="/opt/stream-ingester/sbin:${PATH}"
 
 ENTRYPOINT ["nginx"]
 CMD ["-c", "/opt/stream-ingester/etc/stream-ingester-rtmp.conf"]
