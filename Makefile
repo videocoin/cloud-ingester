@@ -1,3 +1,7 @@
+.NOTPARALLEL:
+.EXPORT_ALL_VARIABLES:
+.DEFAULT_GOAL := main
+
 APP_NAME?=ingester
 VERSION?=$$(git rev-parse --short HEAD)
 GOOGLE_PROJECT?=videocoin-183500
@@ -14,6 +18,8 @@ GOARCH?=amd64
 .PHONY: deploy
 
 default: all
+
+main: build-docker-image push-docker-image
 
 all: build-docker-image push-docker-image
 

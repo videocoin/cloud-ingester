@@ -37,11 +37,7 @@ func NewService(cfg *Config) (*Service, error) {
 
 // Start runs hookd service
 func Start() {
-	cfgLoc, exists := os.LookupEnv("CONFIG_LOC")
-	if !exists {
-		log.Fatalf("please set CONFIG_LOC")
-	}
-	cfg := LoadConfig(cfgLoc)
+	cfg := LoadConfig()
 
 	level, err := log.ParseLevel(cfg.Loglevel)
 	if err != nil {
