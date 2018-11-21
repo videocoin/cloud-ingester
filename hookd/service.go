@@ -26,7 +26,7 @@ func NewService(cfg *Config) (*Service, error) {
 		log.WithField("system", "http-server"),
 	)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 	return &Service{
 		logger:     log.New().WithField("name", "hookd"),

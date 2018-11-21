@@ -1,6 +1,10 @@
 package hookd
 
 import (
+	"context"
+	"fmt"
+
+	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/labstack/echo"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
@@ -45,6 +49,7 @@ func NewHTTPServer(cfg *HTTPServerConfig, logger *logrus.Entry) (*HTTPServer, er
 	if err != nil {
 		return nil, err
 	}
+
 	manager := pb.NewManagerServiceClient(managerConn)
 
 	e := echo.New()
@@ -56,6 +61,8 @@ func NewHTTPServer(cfg *HTTPServerConfig, logger *logrus.Entry) (*HTTPServer, er
 		return c.JSON(200, map[string]string{"status": "OK"})
 	})
 
+	status, err := manager.Health(context.Background(), &empty.Empty{})
+	fmt.Println(status, err)
 	hook, err := NewHook(
 		e,
 		"/hook",
