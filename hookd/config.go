@@ -11,7 +11,7 @@ import (
 type Config struct {
 	Addr           string `required:"true" default:"127.0.0.1:8888"`
 	Loglevel       string `required:"true" default:"DEBUG" envconfig:"LOG_LEVEL"`
-	ManagerRPCADDR string `required:"true" envconfig:"MANAGER_RPC_ADDR" default:"localhost:50051"`
+	ManagerRPCADDR string `required:"true" envconfig:"MANAGER_RPC_ADDR" default:"manager:50051"`
 	SentryDSN      string `required:"false"`
 }
 

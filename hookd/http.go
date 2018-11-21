@@ -2,7 +2,6 @@ package hookd
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/labstack/echo"
@@ -62,7 +61,10 @@ func NewHTTPServer(cfg *HTTPServerConfig, logger *logrus.Entry) (*HTTPServer, er
 	})
 
 	status, err := manager.Health(context.Background(), &empty.Empty{})
-	fmt.Println(status, err)
+	if status.String() != "healthy" || err != nil {
+		panic(err)
+	}
+
 	hook, err := NewHook(
 		e,
 		"/hook",
