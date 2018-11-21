@@ -45,7 +45,7 @@ test-coverage:
 	go test -cover ./...
 
 docker:
-	docker build -t ${IMAGE_TAG} -t $(LATEST) . --squash
+	docker build  -t ${IMAGE_TAG} -t $(LATEST) . --squash
 
 push:
 	@echo "==> Pushing $(IMAGE_TAG)..."

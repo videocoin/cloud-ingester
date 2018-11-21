@@ -85,4 +85,4 @@ RUN mkdir -p /var/log/stream-ingester
 ENV PATH="/opt/stream-ingester/sbin:${PATH}"
 
 ENTRYPOINT ["nginx"]
-CMD ["-c", "/opt/stream-ingester/etc/stream-ingester-rtmp.conf"]
+CMD ["-c", "/opt/stream-ingester/etc/stream-ingester-rtmp.conf", "-g", "daemon off;"]
