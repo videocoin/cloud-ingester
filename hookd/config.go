@@ -21,7 +21,7 @@ var once sync.Once
 // LoadConfig initialize config
 func LoadConfig() *Config {
 	once.Do(func() {
-		err := envconfig.Process("INGESTER", &cfg)
+		err := envconfig.Process("", &cfg)
 		if err != nil {
 			logrus.Fatalf("failed to load config: %s", err.Error())
 		}
