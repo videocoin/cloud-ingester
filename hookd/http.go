@@ -61,7 +61,7 @@ func NewHTTPServer(cfg *HTTPServerConfig, logger *logrus.Entry) (*HTTPServer, er
 	})
 
 	status, err := manager.Health(context.Background(), &empty.Empty{})
-	if status.String() != "healthy" || err != nil {
+	if status.GetStatus() != "healthy" || err != nil {
 		panic(err)
 	}
 
