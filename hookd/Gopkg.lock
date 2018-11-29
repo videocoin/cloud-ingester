@@ -10,11 +10,10 @@
   revision = "3a771d992973f24aa725d07868b467d1ddfceafb"
 
 [[projects]]
-  digest = "1:35621fe20f140f05a0c4ef662c26c0ab4ee50bca78aa30fe87d33120bd28165e"
+  digest = "1:3f7c586d2fd571c4f2e3d313c0638b33b999055de507d5f11fafe27e5adc30db"
   name = "github.com/gogo/protobuf"
   packages = [
     "gogoproto",
-    "jsonpb",
     "proto",
     "protoc-gen-gogo/descriptor",
     "sortkeys",
@@ -26,7 +25,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:1f9b859c39bef91b570fcdd5013dd92ec8ed070cb4e7427c7ee1e50c52d0883d"
+  digest = "1:a4c5dfdd4b2baabd972de911dbd9b8e298723295b8dabe4589f21e6309ce9205"
   name = "github.com/golang/protobuf"
   packages = [
     "jsonpb",
@@ -40,7 +39,7 @@
     "ptypes/timestamp",
   ]
   pruneopts = "UT"
-  revision = "882cf97a83ad205fd22af574246a3bc647d7a7d2"
+  revision = "1d3f30b51784bec5aad268e59fd3c2fc1c2fe73f"
 
 [[projects]]
   digest = "1:dc296fa78b5ae4c85a62ba62a6d4abde45d78fb4daca01c6aa6876bb14df4c04"
@@ -96,12 +95,12 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:f992df6c97ba40d3643a5fbdf1d33497d1f43f84aa9567f7beb96c1472d74584"
+  digest = "1:e55506f8670236cf09b6b65cda7d6afa403233a5b75397dfcba3555e484e4b18"
   name = "github.com/labstack/echo"
   packages = ["."]
   pruneopts = "UT"
-  revision = "2e9f4ea4e010fa328318107ba074b1b72381c571"
-  version = "v3.3.7"
+  revision = "c7eb8da9ec73e78c4f38413f3f835e0cd52c7d72"
+  version = "v3.3.8"
 
 [[projects]]
   digest = "1:01eb0269028d3c2e21b5b6cd9b1ba81bc4170ab293fcffa84e3aa3a6138a92e8"
@@ -187,7 +186,7 @@
     "model",
   ]
   pruneopts = "UT"
-  revision = "aeab699e26f4d4089dba5e522e5d9babd2adbaf7"
+  revision = "4724e9255275ce38f7179b2478abeae4e28c904f"
 
 [[projects]]
   branch = "master"
@@ -200,7 +199,7 @@
     "xfs",
   ]
   pruneopts = "UT"
-  revision = "185b4288413d2a0dd0806f78c90dde719829e5ae"
+  revision = "619930b0b4713cc1280189bf0a4c54b3fb506f60"
 
 [[projects]]
   digest = "1:69b1cc331fca23d702bd72f860c6a647afd0aa9fcbc1d0659b1365e26546dd70"
@@ -228,18 +227,15 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:3d59cb62c49efa751febb1fabbfcc51a1762f60105de5daebac674006f51e276"
+  digest = "1:054ed48720b4f53f283662c0b369936c1ee63cc822a4e6b18b7dd2dd9846dd3f"
   name = "gitlab.videocoin.io/videocoin/common"
-  packages = [
-    "proto",
-    "protoutil",
-  ]
+  packages = ["proto"]
   pruneopts = "UT"
-  revision = "87271613df77bbe1e8cb88299a6ec7c3598cfc24"
+  revision = "d7d9fa9dc9de547c19c27eefff4063a40e0148e3"
 
 [[projects]]
   branch = "master"
-  digest = "1:c453d9962981ecfd2a07a28ad362ab43896ff7b4cd31aa4f2eaac54c7836ed6b"
+  digest = "1:cea8a31af44e77908c71e68561ce2e5992cf08d3ec29a3f9007f90c9b29bd001"
   name = "golang.org/x/crypto"
   packages = [
     "acme",
@@ -247,7 +243,7 @@
     "ssh/terminal",
   ]
   pruneopts = "UT"
-  revision = "3d3f9f413869b949e48070b5bc593aa22cc2b8f2"
+  revision = "eb0de9b17e854e9b1ccd9963efafc79862359959"
 
 [[projects]]
   branch = "master"
@@ -267,14 +263,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:f343f077a5b0bc3a3788b3a04e24dd417e3e25b2acb529c413e212d2c42416ef"
+  digest = "1:0c7cb58af944f9690af91474a75371eecfe54c1ce3771a8dc08924430ee785d3"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "0cf1ed9e522b7dbb416f080a5c8003de9b702bf4"
+  revision = "4ed8d59d0b35e1e29334a206d1b3f38b1e5dfb31"
 
 [[projects]]
   digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
@@ -308,7 +304,7 @@
     "googleapis/rpc/status",
   ]
   pruneopts = "UT"
-  revision = "b5d43981345bdb2c233eb4bf3277847b48c6fdc6"
+  revision = "31ac5d88444a9e7ad18077db9a165d793ad06a2e"
 
 [[projects]]
   digest = "1:c3ad9841823db6da420a5625b367913b4ff54bbe60e8e3c98bd20e243e62e2d2"
