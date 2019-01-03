@@ -71,7 +71,7 @@ data:
 
                 hls on;
                 hls_type live;
-                hls_fragment 2s;
+                hls_fragment 10s;
                 hls_playlist_length 60s;
                 hls_path /tmp/hls;
                 hls_cleanup on;

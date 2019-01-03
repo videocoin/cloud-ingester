@@ -46,7 +46,7 @@ rtmp {
             live on;
             hls on;
             hls_path /tmp/tv2;
-            hls_fragment 15s;
+            hls_fragment 10s;
 
             pull rtmp://tv2.example.com:443/root/new name=tv2;
         }
