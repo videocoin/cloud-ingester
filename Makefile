@@ -29,6 +29,9 @@ version:
 build-docker-image:
 	docker build -t ${IMAGE_TAG} -t ${LATEST} .
 
+local-docker:
+	docker build -t ingester -f Dockerfile.local .
+
 push-docker-image:
 	gcloud docker -- push ${IMAGE_TAG}
 	gcloud docker -- push ${LATEST}
