@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ingester
+  labels:
+    app: ingester
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ingester
+  template:
+    metadata:
+      labels:
+        app: ingester
+    spec:
+      nodeSelector:
+        cloud.google.com/gke-nodepool: api-pool
+      containers:
+      - name: ingester
+        image: us.gcr.io/videocoin-183500/ingester:latest
+        imagePullPolicy: Always
+        resources: {}

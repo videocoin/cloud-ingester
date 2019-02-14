@@ -1,0 +1,22 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: ingester
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 35.185.234.204
+  selector:
+    app: ingester
+  ports:
+  - name: rtmp
+    protocol: TCP
+    port: 8080
+    targetPort: 8080
+  - name: proxy
+    protocol: TCP
+    port: 8888
+    targetPort: 8888
+  - name: ingest
+    protocol: TCP
+    port: 1935
+    targetPort: 1935

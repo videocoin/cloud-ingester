@@ -1,0 +1,17 @@
+apiVersion: skaffold/v1beta4
+kind: Config
+deploy:
+
+
+  kubectl:
+    manifests:
+    - skaffold/k8s-*
+build:
+    artifacts:
+    - image: us.gcr.io/videocoin-183500/ingester
+    # Use local Docker daemon to build artifacts
+    local:
+        push: true
+        useDockerCLI: false
+        useBuildkit: false
+  
