@@ -20,9 +20,9 @@ spec:
         app: ingester
     spec:
       nodeSelector:
-        cloud.google.com/gke-nodepool: api-pool
+        cloud.google.com/gke-nodepool: api
       containers:
-      - name: ingester
-        image: us.gcr.io/videocoin-183500/ingester:latest
-        imagePullPolicy: Always
-        resources: {}
+        - name: ingester
+          image: us.gcr.io/videocoin-183500/ingester:latest
+          imagePullPolicy: Always
+          resources: {}
