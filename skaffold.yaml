@@ -8,7 +8,7 @@ deploy:
     - skaffold/k8s-*
 build:
     artifacts:
-    - image: us.gcr.io/videocoin-183500/ingester
+    - image: us.gcr.io/videocoin-183500/ingester-testing
     # Use local Docker daemon to build artifacts
     local:
         push: true
