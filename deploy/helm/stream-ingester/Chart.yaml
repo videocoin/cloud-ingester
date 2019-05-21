@@ -1,4 +1,0 @@
-apiVersion: v1
-description: Live Planet Cloud Stream Ingester
-name: stream-ingester
-version: 0.2.0

@@ -1,12 +1,13 @@
 #!/bin/bash
 
-readonly CHART_NAME=stream-ingester
-readonly CHART_DIR=./helm/$CHART_NAME
+readonly CHART_NAME=ingester
+readonly CHART_DIR=./helm/ingester
 
-CONSUL_ADDR=${CONSUL_ADDR:=consul.internal.liveplanetstage.net:80}
-WORKSPACE=${WORKSPACE:=staging}
-PROJECT=${PROJECT:=cloud}
-VERSION=${VERSION:=`git describe --abbrev=0`-`git rev-parse --short HEAD`}
+CONSUL_ADDR=${CONSUL_ADDR:=127.0.0.1:8500}
+ENV=${ENV:=thor}
+DOCKER_REGISTRY=us.gcr.io
+VERSION=${VERSION:=`git rev-parse --short HEAD`}
+PROJECT=${PROJECT:=`gcloud config list --format 'value(core.project)' 2>/dev/null`}
 
 function log {
   local readonly level="$1"
@@ -30,7 +31,7 @@ function log_error {
   log "ERROR" "$message"
 }
 
-function update_deps {
+function update_deps() {
     log_info "Syncing dependencies..."
     helm dependencies update --kube-context ${KUBE_CONTEXT} ${CHART_DIR}
 }
@@ -47,32 +48,21 @@ function has_helm {
   [ -n "$(command -v helm)" ]
 }
 
-function get_md {
-  local readonly k="$1"
-  local readonly v=`consul kv get -http-addr=${CONSUL_ADDR} $k`
-  echo "$v"
-}
-
-function get_vars {
+function get_vars() {
     log_info "Getting variables..."
-    readonly GOOGLE_PROJECT=$(get_md infra/common/${WORKSPACE}/${PROJECT}/gcp_project)
-    readonly KUBE_CONTEXT=$(get_md infra/common/${WORKSPACE}/${PROJECT}/kube_context)
-    readonly INGRESS_STATIC_IP_NAME=$(get_md infra/services/stream-ingester/${WORKSPACE}/${PROJECT}/vars/ingress_static_ip_name)
-    readonly INGRESS_HTTP_HOST=$(get_md infra/services/stream-ingester/${WORKSPACE}/${PROJECT}/vars/ingress_http_host)
-    readonly RTMP_LB_IP=$(get_md infra/services/stream-ingester/${WORKSPACE}/${PROJECT}/vars/rtmp_lb_ip)
+    readonly KUBE_CONTEXT=`consul kv get -http-addr=${CONSUL_ADDR} config/${ENV}/common/kube_context`
+    readonly SERVICE_IP=`consul kv get -http-addr=${CONSUL_ADDR} config/${ENV}/services/${CHART_NAME}/vars/serviceIp`
+ 
 }
 
-function deploy {
+function deploy() {
     log_info "Deploying ${CHART_NAME} version ${VERSION}"
-    readonly REPOSITORY="us.gcr.io/${GOOGLE_PROJECT}/${CHART_NAME}"
     helm upgrade \
         --kube-context "${KUBE_CONTEXT}" \
         --install \
+        --set service.ip="${SERVICE_IP}" \
         --set image.tag="${VERSION}" \
-        --set image.repository="${REPOSITORY}" \
-        --set ingress.staticIpName="${INGRESS_STATIC_IP_NAME}" \
-        --set ingress.httpHost="${INGRESS_HTTP_HOST}" \
-        --set rtmpService.loadBalancerIP="${RTMP_LB_IP}" \
+        --set image.repo="${DOCKER_REGISTRY}/${PROJECT}/${CHART_NAME}" \
         --wait ${CHART_NAME} ${CHART_DIR}
 }
 

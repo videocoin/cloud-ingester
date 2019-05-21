@@ -1,0 +1,21 @@
+image:
+  repo: ""
+  tag: ""
+  pullPolicy: Always
+
+
+config:
+  minReplicas: "1"
+  maxReplicas: "5"
+
+service:
+  type: LoadBalancer
+  ip: ""
+  rtmpPort: 8080
+  proxyPort: 8888
+  ingestPort: 1935
+
+resources: {}
+
+deployment:
+  nodePool: api
