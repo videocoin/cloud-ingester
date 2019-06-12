@@ -7,7 +7,7 @@ CIRCLE_ARTIFACTS = ./bin
 SERVICE_NAME = ingester
 
 PROJECT_ID=$$(gcloud config list --format 'value(core.project)' 2>/dev/null)
-VERSION=$$(git rev-parse --short HEAD)
+VERSION=$$(git describe --abbrev=0)-$$(git rev-parse --short HEAD)
 IMAGE_TAG=$(DOCKER_REGISTRY)/${PROJECT_ID}/$(SERVICE_NAME):$(VERSION)
 LATEST=$(DOCKER_REGISTRY)/${PROJECT_ID}/$(SERVICE_NAME):latest
 
