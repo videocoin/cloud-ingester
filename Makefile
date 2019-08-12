@@ -9,8 +9,6 @@ SERVICE_NAME = ingester
 PROJECT_ID= videocoin-network
 VERSION=$$(git describe --abbrev=0)-$$(git rev-parse --short HEAD)
 IMAGE_TAG=$(DOCKER_REGISTRY)/$(PROJECT_ID)/$(SERVICE_NAME):$(VERSION)
-LATEST=$(DOCKER_REGISTRY)/$(PROJECT_ID)/$(SERVICE_NAME):latest
-
 
 PACKAGE_FILENAME=ingester-${VERSION}.deb
 DEB_REPO_PASSWORD?=
@@ -29,14 +27,13 @@ version:
 	@echo ${VERSION}
 
 docker:
-	docker build -t ${IMAGE_TAG} -t ${LATEST} .
+	docker build -t ${IMAGE_TAG} .
 
 local-docker:
 	docker build -t ingester -f Dockerfile.local .
 
 push:
 	docker push ${IMAGE_TAG}
-	docker push ${LATEST}
 
 tag:
 	@echo ${IMAGE_TAG}
