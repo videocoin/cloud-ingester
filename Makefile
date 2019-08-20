@@ -7,7 +7,7 @@ CIRCLE_ARTIFACTS = ./bin
 SERVICE_NAME = ingester
 
 PROJECT_ID= videocoin-network
-VERSION=$$(git describe --abbrev=0)-$$(git rev-parse --short HEAD)
+VERSION=$$(git describe --abbrev=0)-$$(git rev-parse --abbrev-ref HEAD)-$$(git rev-parse --short HEAD)
 IMAGE_TAG=$(DOCKER_REGISTRY)/$(PROJECT_ID)/$(SERVICE_NAME):$(VERSION)
 
 PACKAGE_FILENAME=ingester-${VERSION}.deb
