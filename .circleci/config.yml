@@ -43,9 +43,9 @@ jobs:
       - run:
           <<: *docker_login
       - run:
-          name: docker
+          name: Build images
           command: |
-            make docker
+            make build
       - save_cache:
           key: v1-repo-{{ .Branch }}-{{ .Revision }}
           paths:
@@ -73,9 +73,14 @@ jobs:
               echo 'export CONSUL_AUTH=$CONSUL_AUTH_GROOT' >> $BASH_ENV
             fi
 
+            if [ $CIRCLE_BRANCH = 'sandbox' ]; then
+              gcloud container clusters get-credentials snb --zone us-central1-a --project videocoin-network
+              echo 'export ENV="snb"' >> $BASH_ENV
+            fi
+
             helm init --client-only
       - run:
-          name: make push
+          name: Push images
           command: |
             make push
 workflows:
@@ -91,3 +96,4 @@ workflows:
               only:
                 - develop
                 - staging
+                - sandbox

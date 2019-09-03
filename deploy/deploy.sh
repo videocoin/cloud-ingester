@@ -51,7 +51,6 @@ function has_helm {
 function get_vars() {
     log_info "Getting variables..."
     readonly KUBE_CONTEXT=`consul kv get -http-addr=${CONSUL_ADDR} config/${ENV}/common/kube_context`
-    readonly SERVICE_IP=`consul kv get -http-addr=${CONSUL_ADDR} config/${ENV}/services/${CHART_NAME}/vars/serviceIp`
  
 }
 
@@ -60,9 +59,7 @@ function deploy() {
     helm upgrade \
         --kube-context "${KUBE_CONTEXT}" \
         --install \
-        --set service.ip="${SERVICE_IP}" \
         --set image.tag="${VERSION}" \
-        --set image.repo="${DOCKER_REGISTRY}/${PROJECT}/${CHART_NAME}" \
         --wait ${CHART_NAME} ${CHART_DIR}
 }
 

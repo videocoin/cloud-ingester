@@ -1,53 +1,48 @@
 .NOTPARALLEL:
 .EXPORT_ALL_VARIABLES:
-.DEFAULT_GOAL := docker
 
 DOCKER_REGISTRY = us.gcr.io
-CIRCLE_ARTIFACTS = ./bin
-SERVICE_NAME = ingester
+APP_NAME = ingester
 
 PROJECT_ID= videocoin-network
 VERSION=$$(git describe --abbrev=0)-$$(git rev-parse --abbrev-ref HEAD)-$$(git rev-parse --short HEAD)
-IMAGE_TAG=$(DOCKER_REGISTRY)/$(PROJECT_ID)/$(SERVICE_NAME):$(VERSION)
-
-PACKAGE_FILENAME=ingester-${VERSION}.deb
-DEB_REPO_PASSWORD?=
-REPO_ADDR?=http://aptly.videocoin.io
+IMAGE_TAG=$(DOCKER_REGISTRY)/$(PROJECT_ID)/$(APP_NAME):$(VERSION)
+HOOKD_IMAGE_TAG=${DOCKER_REGISTRY}/$(PROJECT_ID)/$(APP_NAME)-hookd:${VERSION}
 
 GOOS?=linux
 GOARCH?=amd64
 
+.PHONY: deploy
+
 default: all
 
-main: build-docker-image push-docker-image
-
-all: build-docker-image push-docker-image
+all: release
 
 version:
 	@echo ${VERSION}
 
-docker:
-	docker build -t ${IMAGE_TAG} .
+build-ingester:
+	docker build -t ${IMAGE_TAG} -f Dockerfile.ingester .
 
-local-docker:
-	docker build -t ingester -f Dockerfile.local .
+build-hookd:
+	docker build -t ${HOOKD_IMAGE_TAG} -f Dockerfile.hookd .	
+
+build-bin-hookd:
+	@echo "==> Building..."
+	GOOS=${GOOS} GOARCH=${GOARCH} \
+	go build -ldflags="-w -s -X main.Version=${VERSION}" -o bin/hookd hookd/cmd/hookd/main.go
+
+build: build-hookd build-ingester
 
 push:
+	docker push ${HOOKD_IMAGE_TAG}
 	docker push ${IMAGE_TAG}
 
 tag:
 	@echo ${IMAGE_TAG}
+	@echo ${HOOKD_IMAGE_TAG}
 
 deploy:
 	cd ./deploy && ./deploy.sh
 
-build-deb:
-	docker build \
-		--build-arg VERSION=${VERSION} \
-		-t lp-stream-ingester-deb:${VERSION} \
-		-f Dockerfile.deb . && \
-	docker run \
-		--rm -it \
-		-v `pwd`/build/pkg:/build/pkg \
-		lp-stream-ingester-deb:${VERSION} \
-		cp /pkg/${PACKAGE_FILENAME} /build/pkg
+release: build push

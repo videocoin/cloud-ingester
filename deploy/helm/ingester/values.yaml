@@ -3,9 +3,7 @@ image:
   tag: latest
   pullPolicy: Always
 
-config:
-  minReplicas: "1"
-  maxReplicas: "5"
+replicasCount: 3
 
 service:
   rtmp:
@@ -16,3 +14,13 @@ service:
     port: 80
 
 resources: {}
+
+hookd:
+  image:
+    repository: us.gcr.io/videocoin-network/ingester-hookd
+    tag: latest
+    pullPolicy: Always
+  service:
+    http:
+      type:
+      port: 8887

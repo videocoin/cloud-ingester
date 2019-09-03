@@ -1,0 +1,19 @@
+FROM golang:1.10 as builder
+
+RUN apt-get update
+RUN apt-get install -y ca-certificates
+
+COPY . /go/src/github.com/videocoin/cloud-ingester
+
+WORKDIR /go/src/github.com/videocoin/cloud-ingester
+
+RUN make build-bin-hookd
+
+FROM bitnami/minideb:jessie
+
+RUN apt-get update
+RUN apt-get install -y ca-certificates
+
+COPY --from=builder /go/src/github.com/videocoin/cloud-ingester/bin/hookd /hookd
+
+CMD ["/hookd"]
