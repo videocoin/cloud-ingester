@@ -78,7 +78,6 @@ RUN chown www-data /tmp/records /var/log/stream-ingester
 
 EXPOSE 80
 EXPOSE 1935
-EXPOSE 8888
 
 RUN mkdir -p /var/log/stream-ingester
 

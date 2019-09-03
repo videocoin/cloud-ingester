@@ -1,32 +1,37 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
+  name: {{ .Release.Name }}
   labels:
-    app: {{ .Chart.Name }}
+    app: {{ .Release.Name }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     heritage: {{ .Release.Service }}
-  name: {{ .Chart.Name }}
-  namespace: default
-  selfLink: /apis/extensions/v1beta1/namespaces/default/deployments/{{ .Chart.Name }}
 spec:
-  selector:
-    matchLabels:
-      app: {{ .Chart.Name }}
+  replicas: {{ .Values.replicasCount }}
   strategy:
     rollingUpdate:
-      maxSurge: 2
-      maxUnavailable: 0
-    type: RollingUpdate
+      maxUnavailable: {{ .Values.maxUnavailableCount }}
   template:
     metadata:
+      name: {{ .Release.Name }}
       labels:
-        app: {{ .Chart.Name }}
-      name: {{ .Chart.Name }}
+        app: {{ .Release.Name }}
     spec:
-      nodeSelector:
-        cloud.google.com/gke-nodepool: {{ .Values.deployment.nodePool }}
       containers:
-        - name: {{ .Chart.Name }}
-          imagePullPolicy: Always
-          image: "{{ .Values.image.repo }}:{{ .Values.image.tag }}"
-          resources: {}
+        - name: {{ .Release.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.http.port }}
+            - containerPort: {{ .Values.service.rtmp.port }}
+          {{- if .Values.resources }}
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+          {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ .Release.Name }}
+        - name: secrets
+          secret:
+            secretName: {{ .Release.Name }}

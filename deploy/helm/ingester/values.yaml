@@ -1,21 +1,18 @@
 image:
-  repo: ""
-  tag: ""
+  repository: us.gcr.io/videocoin-network/ingester
+  tag: latest
   pullPolicy: Always
-
 
 config:
   minReplicas: "1"
   maxReplicas: "5"
 
 service:
-  type: LoadBalancer
-  ip: ""
-  rtmpPort: 8080
-  proxyPort: 8888
-  ingestPort: 1935
+  rtmp:
+    type:
+    port: 1935
+  http:
+    type:
+    port: 80
 
 resources: {}
-
-deployment:
-  nodePool: api

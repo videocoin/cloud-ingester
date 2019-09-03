@@ -1,26 +1,35 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Chart.Name }}
+  name: {{ .Release.Name }}-http
   labels:
-    app: {{ .Chart.Name }}
+    app: {{ .Release.Name }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     heritage: {{ .Release.Service }}
 spec:
+  selector:
+    app: {{ .Release.Name }}
+  type: {{ .Values.service.http.type }}
+  ports:
+  - name: http
+    protocol: TCP
+    port: {{ .Values.service.http.port }}
+    targetPort: {{ .Values.service.http.port }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-rtmp
+  labels:
+    app: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    heritage: {{ .Release.Service }}
+spec:
+  selector:
+    app: {{ .Release.Name }}
   type: {{ .Values.service.type }}
-  loadBalancerIP: {{ .Values.service.ip }}
   ports:
   - name: rtmp
     protocol: TCP
-    port: {{ .Values.service.rtmpPort }}
-    targetPort: {{ .Values.service.rtmpPort }}
-  - name: proxy
-    protocol: TCP
-    port: {{ .Values.service.proxyPort }}
-    targetPort: {{ .Values.service.proxyPort }}
-  - name: ingest
-    protocol: TCP
-    port: {{ .Values.service.ingestPort }}
-    targetPort: {{ .Values.service.ingestPort }}
-  selector:
-    app: {{ .Chart.Name }}
+    port: {{ .Values.service.rtmp.port }}
+    targetPort: {{ .Values.service.rtmp.port }}
