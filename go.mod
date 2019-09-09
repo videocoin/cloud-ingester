@@ -3,9 +3,7 @@ module github.com/videocoin/cloud-ingester
 go 1.12
 
 require (
-	github.com/certifi/gocertifi v0.0.0-20190506164543-d2eda7129713 // indirect
 	github.com/evalphobia/logrus_sentry v0.8.2
-	github.com/getsentry/raven-go v0.2.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/kelseyhightower/envconfig v1.4.0
@@ -17,6 +15,7 @@ require (
 	github.com/prometheus/client_golang v1.1.0
 	github.com/sirupsen/logrus v1.4.2
 	github.com/videocoin/cloud-api v0.2.6
+	github.com/videocoin/hookd v0.0.66
 	google.golang.org/grpc v1.23.0
 )
 
