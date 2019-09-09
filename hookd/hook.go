@@ -7,8 +7,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
-	jobsv1 "github.com/videocoin/cloud-api/jobs/v1"
-	managerv1 "github.com/videocoin/cloud-api/manager/v1"
+	v1 "github.com/videocoin/cloud-api/streams/v1"
 )
 
 var (
@@ -23,20 +22,20 @@ type Hook struct {
 	cfg     *HookConfig
 	e       *echo.Echo
 	logger  *logrus.Entry
-	manager managerv1.ManagerServiceClient
+	streams v1.StreamServiceClient
 }
 
 func NewHook(
 	e *echo.Echo,
 	cfg *HookConfig,
-	manager managerv1.ManagerServiceClient,
+	streams v1.StreamServiceClient,
 	logger *logrus.Entry,
 ) (*Hook, error) {
 	hook := &Hook{
 		e:       e,
 		cfg:     cfg,
 		logger:  logger,
-		manager: manager,
+		streams: streams,
 	}
 	hook.e.Any(cfg.Prefix, hook.handleHook)
 	return hook, nil
@@ -70,62 +69,59 @@ func (h *Hook) handleHook(c echo.Context) error {
 }
 
 func (h *Hook) handlePublish(ctx context.Context, r *http.Request) error {
-	span, spanCtx := opentracing.StartSpanFromContext(ctx, "handlePublish")
+	span, ctx := opentracing.StartSpanFromContext(ctx, "handlePublish")
 	defer span.Finish()
 
 	logger := h.logger.WithField("hook", "publish")
 	logger.Info("handling hook")
 
-	streamInfo, err := ParseStreamName(spanCtx, r.FormValue("name"))
-	if err != nil {
-		logger.Warningf("failed to parse stream name: %s", err)
+	streamId := r.FormValue("name")
+	if streamId == "" {
+		logger.Warningf("failed to get stream name")
 		return ErrBadRequest
 	}
 
-	span.SetTag("job_id", streamInfo.JobID)
-	logger = logger.WithField("job_id", streamInfo.JobID)
+	span.SetTag("stream_id", streamId)
+	logger = logger.WithField("id", streamId)
 
-	managerResp, err := h.manager.UpdateStatus(context.Background(), &managerv1.UpdateJobRequest{
-		Id:          streamInfo.JobID,
-		Status:      jobsv1.JobStatusPending,
-		InputStatus: jobsv1.InputStatusActive,
+	_, err := h.streams.Update(ctx, &v1.UpdateStreamRequest{
+		Id:          streamId,
+		Status:      v1.StreamStatusPending,
+		InputStatus: v1.InputStatusActive,
 	})
 
 	if err != nil {
 		logger.Errorf("failed to update stream status: %s", err.Error())
 	}
 
-	logger.Debugf("manager response: %+v", managerResp)
-
 	return nil
 }
 
 func (h *Hook) handlePublishDone(ctx context.Context, r *http.Request) error {
-	span, spanCtx := opentracing.StartSpanFromContext(ctx, "handlePublishDone")
+	span, ctx := opentracing.StartSpanFromContext(ctx, "handlePublishDone")
 	defer span.Finish()
 
 	logger := h.logger.WithField("hook", "publish_done")
 	logger.Info("handling hook")
 
-	streamInfo, err := ParseStreamName(spanCtx, r.FormValue("name"))
-	if err != nil {
-		logger.Warningf("failed to parse stream name: %s", err)
+	streamId := r.FormValue("name")
+	if streamId == "" {
+		logger.Warningf("failed to get stream name")
 		return ErrBadRequest
 	}
 
-	span.SetTag("job_id", streamInfo.JobID)
-	logger = logger.WithField("job_id", streamInfo.JobID)
+	span.SetTag("stream_id", streamId)
+	logger = logger.WithField("id", streamId)
 
 	logger.Info("stopping stream")
 
-	managerResp, err := h.manager.Stop(context.Background(), &managerv1.JobRequest{
-		Id: streamInfo.JobID,
+	_, err := h.streams.Stop(ctx, &v1.StreamRequest{
+		Id: streamId,
 	})
+
 	if err != nil {
 		logger.Errorf("failed to stop stream: %s", err.Error())
 	}
-
-	logger.Debugf("manager response: %+v", managerResp)
 
 	return nil
 }

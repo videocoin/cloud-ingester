@@ -25,7 +25,7 @@ build-ingester:
 	docker build -t ${IMAGE_TAG} -f Dockerfile.ingester .
 
 build-hookd:
-	docker build -t ${HOOKD_IMAGE_TAG} -f Dockerfile.hookd .	
+	docker build -t ${HOOKD_IMAGE_TAG} -f Dockerfile.hookd .
 
 build-bin-hookd:
 	@echo "==> Building..."
@@ -33,6 +33,9 @@ build-bin-hookd:
 	go build -ldflags="-w -s -X main.Version=${VERSION}" -o bin/hookd hookd/cmd/hookd/main.go
 
 build: build-hookd build-ingester
+
+deps:
+	env GO111MODULE=on go mod vendor
 
 push:
 	docker push ${HOOKD_IMAGE_TAG}

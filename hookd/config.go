@@ -10,11 +10,11 @@ import (
 
 type Config struct {
 	Addr           string `required:"true" envconfig:"ADDR" default:"0.0.0.0:8887"`
-	Loglevel       string `required:"true" envconfig:"LOGLEVEL" default:"INFO"`
-	ManagerRPCAddr string `required:"true" envconfig:"VC_MANAGER_RPC_ADDR" default:"127.0.0.1:50051"`
-	SentryDSN      string `required:"false"`
+	StreamsRPCAddr string `required:"true" envconfig:"STREAMS_RPC_ADDR" default:"127.0.0.1:50051"`
 
-	Logger *logrus.Entry `ignored:"true"`
+	SentryDSN string        `required:"false"`
+	Logger    *logrus.Entry `ignored:"true"`
+	Loglevel  string        `required:"true" envconfig:"LOGLEVEL" default:"INFO"`
 }
 
 func (c *Config) InitLogger() error {
