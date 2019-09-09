@@ -29,6 +29,18 @@ spec:
           imagePullPolicy: {{ .Values.hookd.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.hookd.service.http.port }}
+          env:
+            - name: JAEGER_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: JAEGER_AGENT_PORT
+              value: "6831"
+            - name: STREAMS_RPC_ADDR
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Chart.Name }}
+                  key: streamsRpcAddr
           {{- if .Values.resources }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
