@@ -4,14 +4,14 @@ import (
 	"github.com/labstack/echo"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
-	managerv1 "github.com/videocoin/cloud-api/manager/v1"
-	"github.com/videocoin/cloud-ingester/hookd/pkg/grpcclient"
+	v1 "github.com/videocoin/cloud-api/streams/v1"
+	"github.com/videocoin/hookd/pkg/grpcclient"
 	"google.golang.org/grpc"
 )
 
 type HTTPServerConfig struct {
 	Addr           string
-	ManagerRPCAddr string
+	StreamsRPCAddr string
 }
 
 type httpServer struct {
@@ -31,19 +31,21 @@ func NewHTTPServer(cfg *HTTPServerConfig, logger *logrus.Entry) (*httpServer, er
 		return c.JSON(200, map[string]string{"status": "OK"})
 	})
 
-	hookConfig := &HookConfig{Prefix: "/hook"}
-
-	managerOpts := grpcclient.DialOpts(logger)
-	managerConn, err := grpc.Dial(cfg.ManagerRPCAddr, managerOpts...)
+	opts := grpcclient.DialOpts(logger)
+	conn, err := grpc.Dial(cfg.StreamsRPCAddr, opts...)
 	if err != nil {
 		return nil, err
 	}
-	manager := managerv1.NewManagerServiceClient(managerConn)
+	streams := v1.NewStreamServiceClient(conn)
+
+	hookConfig := &HookConfig{
+		Prefix: "/hook",
+	}
 
 	hook, err := NewHook(
 		e,
 		hookConfig,
-		manager,
+		streams,
 		logger.WithField("system", "hook"),
 	)
 	if err != nil {

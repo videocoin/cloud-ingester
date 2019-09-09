@@ -13,7 +13,7 @@ type Service struct {
 func NewService(cfg *Config) (*Service, error) {
 	httpServerCfg := &HTTPServerConfig{
 		Addr:           cfg.Addr,
-		ManagerRPCAddr: cfg.ManagerRPCAddr,
+		StreamsRPCAddr: cfg.StreamsRPCAddr,
 	}
 	httpServer, err := NewHTTPServer(
 		httpServerCfg,
