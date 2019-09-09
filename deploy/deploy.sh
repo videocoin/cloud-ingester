@@ -4,10 +4,10 @@ readonly CHART_NAME=ingester
 readonly CHART_DIR=./helm/ingester
 
 CONSUL_ADDR=${CONSUL_ADDR:=127.0.0.1:8500}
-ENV=${ENV:=dev}
+ENV=${ENV:=snb}
 DOCKER_REGISTRY=us.gcr.io
 VERSION=${VERSION:=`git describe --abbrev=0`-`git rev-parse --short HEAD`}
-PROJECT=${PROJECT:=`gcloud config list --format 'value(core.project)' 2>/dev/null`}
+PROJECT=videocoin-network
 
 function log {
   local readonly level="$1"
@@ -51,7 +51,7 @@ function has_helm {
 function get_vars() {
     log_info "Getting variables..."
     readonly KUBE_CONTEXT=`consul kv get -http-addr=${CONSUL_ADDR} config/${ENV}/common/kube_context`
- 
+    readonly STREAMS_RPC_ADDR=`consul kv get -http-addr=${CONSUL_ADDR} config/${ENV}/services/${CHART_NAME}/vars/streamsRpcAddr`
 }
 
 function deploy() {
@@ -60,6 +60,7 @@ function deploy() {
         --kube-context "${KUBE_CONTEXT}" \
         --install \
         --set image.tag="${VERSION}" \
+        --set config.streamsRpcAddr="${STREAMS_RPC_ADDR}" \
         --wait ${CHART_NAME} ${CHART_DIR}
 }
 
