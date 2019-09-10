@@ -1,9 +1,10 @@
+replicasCount: 3
+maxUnavailableCount: 0
+
 image:
-  repository: us.gcr.io/videocoin-network/ingester
+  repository: gcr.io/videocoin-network/ingester
   tag: latest
   pullPolicy: Always
-
-replicasCount: 3
 
 service:
   rtmp:
@@ -17,7 +18,7 @@ resources: {}
 
 hookd:
   image:
-    repository: us.gcr.io/videocoin-network/ingester-hookd
+    repository: gcr.io/videocoin-network/ingester-hookd
     tag: latest
     pullPolicy: Always
   service:
