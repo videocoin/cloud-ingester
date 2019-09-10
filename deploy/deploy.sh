@@ -1,13 +1,11 @@
 #!/bin/bash
 
 readonly CHART_NAME=ingester
-readonly CHART_DIR=./helm/ingester
+readonly CHART_DIR=./deploy/helm
 
 CONSUL_ADDR=${CONSUL_ADDR:=127.0.0.1:8500}
 ENV=${ENV:=snb}
-DOCKER_REGISTRY=us.gcr.io
-VERSION=${VERSION:=`git describe --abbrev=0`-`git rev-parse --short HEAD`}
-PROJECT=videocoin-network
+VERSION=${VERSION:=`git describe --abbrev=0`-`git rev-parse --abbrev-ref HEAD`-`git rev-parse --short HEAD`}
 
 function log {
   local readonly level="$1"
@@ -60,6 +58,7 @@ function deploy() {
         --kube-context "${KUBE_CONTEXT}" \
         --install \
         --set image.tag="${VERSION}" \
+        --set hookd.image.tag="${VERSION}" \
         --set config.streamsRpcAddr="${STREAMS_RPC_ADDR}" \
         --wait ${CHART_NAME} ${CHART_DIR}
 }

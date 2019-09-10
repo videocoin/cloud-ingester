@@ -1,16 +1,14 @@
-.NOTPARALLEL:
-.EXPORT_ALL_VARIABLES:
-
-DOCKER_REGISTRY = us.gcr.io
-APP_NAME = ingester
-
-PROJECT_ID= videocoin-network
-VERSION=$$(git describe --abbrev=0)-$$(git rev-parse --abbrev-ref HEAD)-$$(git rev-parse --short HEAD)
-IMAGE_TAG=$(DOCKER_REGISTRY)/$(PROJECT_ID)/$(APP_NAME):$(VERSION)
-HOOKD_IMAGE_TAG=${DOCKER_REGISTRY}/$(PROJECT_ID)/$(APP_NAME)-hookd:${VERSION}
 
 GOOS?=linux
 GOARCH?=amd64
+
+GCP_PROJECT=videocoin-network
+
+NAME=ingester
+VERSION=$$(git describe --abbrev=0)-$$(git rev-parse --abbrev-ref HEAD)-$$(git rev-parse --short HEAD)
+
+IMAGE_TAG=gcr.io/${GCP_PROJECT}/${NAME}:${VERSION}
+HOOKD_IMAGE_TAG=gcr.io/${GCP_PROJECT}/${NAME}-hookd:${VERSION}
 
 .PHONY: deploy
 
@@ -46,6 +44,6 @@ tag:
 	@echo ${HOOKD_IMAGE_TAG}
 
 deploy:
-	cd ./deploy && ./deploy.sh
+	ENV=${ENV} deploy/deploy.sh
 
 release: build push
