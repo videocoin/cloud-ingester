@@ -77,14 +77,14 @@ func (h *Hook) handlePublish(ctx context.Context, r *http.Request) error {
 
 	streamId := r.FormValue("name")
 	if streamId == "" {
-		logger.Warningf("failed to get stream name")
+		logger.Warningf("failed to get stream id")
 		return ErrBadRequest
 	}
 
 	span.SetTag("stream_id", streamId)
 	logger = logger.WithField("id", streamId)
 
-	_, err := h.streams.Update(ctx, &v1.UpdateStreamRequest{
+	_, err := h.streams.UpdateStatus(ctx, &v1.UpdateStreamRequest{
 		Id:          streamId,
 		Status:      v1.StreamStatusPending,
 		InputStatus: v1.InputStatusActive,
@@ -106,7 +106,7 @@ func (h *Hook) handlePublishDone(ctx context.Context, r *http.Request) error {
 
 	streamId := r.FormValue("name")
 	if streamId == "" {
-		logger.Warningf("failed to get stream name")
+		logger.Warningf("failed to get stream id")
 		return ErrBadRequest
 	}
 

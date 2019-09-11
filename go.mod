@@ -14,7 +14,7 @@ require (
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/prometheus/client_golang v1.1.0
 	github.com/sirupsen/logrus v1.4.2
-	github.com/videocoin/cloud-api v0.2.6
+	github.com/videocoin/cloud-api v0.2.7
 	github.com/videocoin/hookd v0.0.66
 	google.golang.org/grpc v1.23.0
 )
