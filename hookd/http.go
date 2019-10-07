@@ -4,7 +4,8 @@ import (
 	"github.com/labstack/echo"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
-	v1 "github.com/videocoin/cloud-api/streams/v1"
+	emitterv1 "github.com/videocoin/cloud-api/emitter/v1"
+	privatev1 "github.com/videocoin/cloud-api/streams/private/v1"
 	"github.com/videocoin/hookd/pkg/grpcclient"
 	"google.golang.org/grpc"
 )
@@ -21,7 +22,11 @@ type httpServer struct {
 	hook   *Hook
 }
 
-func NewHTTPServer(cfg *HTTPServerConfig, logger *logrus.Entry) (*httpServer, error) {
+func NewHTTPServer(
+	cfg *HTTPServerConfig,
+	logger *logrus.Entry,
+	emitter emitterv1.EmitterServiceClient,
+) (*httpServer, error) {
 	e := echo.New()
 	e.HideBanner = true
 	e.HidePort = true
@@ -36,7 +41,7 @@ func NewHTTPServer(cfg *HTTPServerConfig, logger *logrus.Entry) (*httpServer, er
 	if err != nil {
 		return nil, err
 	}
-	streams := v1.NewStreamServiceClient(conn)
+	streams := privatev1.NewStreamsServiceClient(conn)
 
 	hookConfig := &HookConfig{
 		Prefix: "/hook",
@@ -46,6 +51,7 @@ func NewHTTPServer(cfg *HTTPServerConfig, logger *logrus.Entry) (*httpServer, er
 		e,
 		hookConfig,
 		streams,
+		emitter,
 		logger.WithField("system", "hook"),
 	)
 	if err != nil {

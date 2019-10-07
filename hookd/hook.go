@@ -1,17 +1,26 @@
 package hookd
 
 import (
+	"bufio"
 	"context"
 	"net/http"
+	"os"
+	"strconv"
+	"strings"
+	"sync"
 
+	"github.com/grafov/m3u8"
 	"github.com/labstack/echo"
 	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
+	emitterv1 "github.com/videocoin/cloud-api/emitter/v1"
+	privatev1 "github.com/videocoin/cloud-api/streams/private/v1"
 	v1 "github.com/videocoin/cloud-api/streams/v1"
 )
 
 var (
-	ErrBadRequest = echo.NewHTTPError(http.StatusBadRequest)
+	ErrBadRequest     = echo.NewHTTPError(http.StatusBadRequest)
+	ErrInternalServer = echo.NewHTTPError(http.StatusInternalServerError)
 )
 
 type HookConfig struct {
@@ -19,16 +28,19 @@ type HookConfig struct {
 }
 
 type Hook struct {
-	cfg     *HookConfig
-	e       *echo.Echo
-	logger  *logrus.Entry
-	streams v1.StreamServiceClient
+	cfg           *HookConfig
+	e             *echo.Echo
+	logger        *logrus.Entry
+	streams       privatev1.StreamsServiceClient
+	emitter       emitterv1.EmitterServiceClient
+	segmentsCount sync.Map
 }
 
 func NewHook(
 	e *echo.Echo,
 	cfg *HookConfig,
-	streams v1.StreamServiceClient,
+	streams privatev1.StreamsServiceClient,
+	emitter emitterv1.EmitterServiceClient,
 	logger *logrus.Entry,
 ) (*Hook, error) {
 	hook := &Hook{
@@ -36,6 +48,7 @@ func NewHook(
 		cfg:     cfg,
 		logger:  logger,
 		streams: streams,
+		emitter: emitter,
 	}
 	hook.e.Any(cfg.Prefix, hook.handleHook)
 	return hook, nil
@@ -59,6 +72,8 @@ func (h *Hook) handleHook(c echo.Context) error {
 		err = h.handlePublish(ctx, req)
 	case "publish_done":
 		err = h.handlePublishDone(ctx, req)
+	case "playlist":
+		err = h.handlePlaylist(ctx, req)
 	}
 
 	if err != nil {
@@ -75,23 +90,31 @@ func (h *Hook) handlePublish(ctx context.Context, r *http.Request) error {
 	logger := h.logger.WithField("hook", "publish")
 	logger.Info("handling hook")
 
-	streamId := r.FormValue("name")
-	if streamId == "" {
+	streamID := r.FormValue("name")
+	if streamID == "" {
 		logger.Warningf("failed to get stream id")
 		return ErrBadRequest
 	}
 
-	span.SetTag("stream_id", streamId)
-	logger = logger.WithField("id", streamId)
+	span.SetTag("stream_id", streamID)
+	logger = logger.WithField("id", streamID)
 
-	_, err := h.streams.UpdateStatus(ctx, &v1.UpdateStreamRequest{
-		Id:          streamId,
-		Status:      v1.StreamStatusPending,
-		InputStatus: v1.InputStatusActive,
-	})
-
+	req := &privatev1.StreamRequest{Id: streamID}
+	streamResp, err := h.streams.Get(ctx, req)
 	if err != nil {
-		logger.Errorf("failed to update stream status: %s", err.Error())
+		logger.Errorf("failed to get stream: %s", err.Error())
+		return ErrBadRequest
+	}
+
+	if streamResp.Status != v1.StreamStatusPreparing {
+		logger.Errorf("wrong stream status: %s", streamResp.Status.String())
+		return ErrBadRequest
+	}
+
+	streamResp, err = h.streams.Publish(ctx, req)
+	if err != nil {
+		logger.Errorf("failed to publish: %s", err.Error())
+		return ErrBadRequest
 	}
 
 	return nil
@@ -104,24 +127,112 @@ func (h *Hook) handlePublishDone(ctx context.Context, r *http.Request) error {
 	logger := h.logger.WithField("hook", "publish_done")
 	logger.Info("handling hook")
 
-	streamId := r.FormValue("name")
-	if streamId == "" {
+	streamID := r.FormValue("name")
+	if streamID == "" {
 		logger.Warningf("failed to get stream id")
 		return ErrBadRequest
 	}
 
-	span.SetTag("stream_id", streamId)
-	logger = logger.WithField("id", streamId)
+	span.SetTag("stream_id", streamID)
+	logger = logger.WithField("id", streamID)
 
-	logger.Info("stopping stream")
+	logger.Info("publishing done")
 
-	_, err := h.streams.Stop(ctx, &v1.StreamRequest{
-		Id: streamId,
-	})
-
+	req := &privatev1.StreamRequest{Id: streamID}
+	_, err := h.streams.PublishDone(ctx, req)
 	if err != nil {
-		logger.Errorf("failed to stop stream: %s", err.Error())
+		logger.Errorf("failed to publish done: %s", err.Error())
+		return ErrBadRequest
 	}
 
 	return nil
+}
+
+func (h *Hook) handlePlaylist(ctx context.Context, r *http.Request) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "handlePlaylist")
+	defer span.Finish()
+
+	logger := h.logger.WithField("hook", "playlist")
+	logger.Info("handling hook")
+
+	streamID := r.FormValue("name")
+	if streamID == "" {
+		logger.Warningf("failed to get stream name")
+		return ErrBadRequest
+	}
+
+	path := r.FormValue("path")
+	if path == "" {
+		logger.Warningf("failed to get stream path")
+		return ErrBadRequest
+	}
+
+	span.SetTag("stream_id", streamID)
+	span.SetTag("path", path)
+	logger = logger.WithField("id", streamID)
+
+	logger.Info("updating playlist")
+
+	f, err := os.Open(path)
+	if err != nil {
+		logger.Errorf("failed to open playlist: %s", err)
+		return ErrInternalServer
+	}
+
+	p, listType, err := m3u8.DecodeFrom(bufio.NewReader(f), true)
+	if err != nil {
+		logger.Errorf("failed to decode playlist: %s", err)
+		return ErrInternalServer
+	}
+
+	switch listType {
+	case m3u8.MASTER:
+		logger.Error("failed to playlist type")
+		return ErrInternalServer
+	case m3u8.MEDIA:
+		pl := p.(*m3u8.MediaPlaylist)
+		segmentsCount := 0
+		for _, s := range pl.Segments {
+			if s != nil {
+				segmentsCount++
+			}
+		}
+
+		req := &privatev1.StreamRequest{Id: streamID}
+		streamResp, err := h.streams.Get(ctx, req)
+		if err != nil {
+			logger.Errorf("failed to get stream: %s", err.Error())
+			return ErrBadRequest
+		}
+
+		actual, ok := h.segmentsCount.LoadOrStore(streamID, segmentsCount)
+		if ok {
+			h.segmentsCount.Store(streamID, segmentsCount)
+		}
+		prevSegmentsCount := actual.(int)
+		for i := prevSegmentsCount; i <= segmentsCount; i++ {
+			achReq := &emitterv1.AddInputChunkIdRequest{
+				StreamContractId: streamResp.StreamContractID,
+				ChunkId:          uint64(i),
+				ChunkDuration:    pl.Segments[i-1].Duration,
+			}
+			tx, err := h.emitter.AddInputChunkId(ctx, achReq)
+			if err != nil {
+				logger.Errorf("failed to add input chunk: %s", err.Error())
+			}
+
+			logger.Debugf("add input chunk tx: %+v\n", tx)
+		}
+	}
+
+	return nil
+}
+
+func hex2int(hexStr string) uint64 {
+	// remove 0x suffix if found in the input string
+	cleaned := strings.Replace(hexStr, "0x", "", -1)
+
+	// base 16 for hexadecimal
+	result, _ := strconv.ParseUint(cleaned, 16, 64)
+	return uint64(result)
 }
