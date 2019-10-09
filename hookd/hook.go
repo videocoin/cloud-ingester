@@ -5,8 +5,6 @@ import (
 	"context"
 	"net/http"
 	"os"
-	"strconv"
-	"strings"
 	"sync"
 
 	"github.com/grafov/m3u8"
@@ -70,8 +68,8 @@ func (h *Hook) handleHook(c echo.Context) error {
 	switch call {
 	case "publish":
 		err = h.handlePublish(ctx, req)
-	case "publish_done":
-		err = h.handlePublishDone(ctx, req)
+	// case "publish_done":
+	// 	err = h.handlePublishDone(ctx, req)
 	case "playlist":
 		err = h.handlePlaylist(ctx, req)
 	}
@@ -106,7 +104,7 @@ func (h *Hook) handlePublish(ctx context.Context, r *http.Request) error {
 		return ErrBadRequest
 	}
 
-	if streamResp.Status != v1.StreamStatusPreparing {
+	if streamResp.Status != v1.StreamStatusPrepared {
 		logger.Errorf("wrong stream status: %s", streamResp.Status.String())
 		return ErrBadRequest
 	}
@@ -210,29 +208,36 @@ func (h *Hook) handlePlaylist(ctx context.Context, r *http.Request) error {
 			h.segmentsCount.Store(streamID, segmentsCount)
 		}
 		prevSegmentsCount := actual.(int)
-		for i := prevSegmentsCount; i <= segmentsCount; i++ {
+
+		for i := prevSegmentsCount; i < segmentsCount; i++ {
 			achReq := &emitterv1.AddInputChunkIdRequest{
 				StreamContractId: streamResp.StreamContractID,
 				ChunkId:          uint64(i),
 				ChunkDuration:    pl.Segments[i-1].Duration,
 			}
-			tx, err := h.emitter.AddInputChunkId(ctx, achReq)
-			if err != nil {
-				logger.Errorf("failed to add input chunk: %s", err.Error())
-			}
 
-			logger.Debugf("add input chunk tx: %+v\n", tx)
+			logger.WithFields(logrus.Fields{
+				"stream_contract_id": streamResp.StreamContractID,
+				"chunk_id":           i,
+			}).Debugf("calling AddInputChunkId")
+
+			_, err := h.emitter.AddInputChunkId(ctx, achReq)
+			if err != nil {
+				logger.WithFields(logrus.Fields{
+					"stream_contract_id": streamResp.StreamContractID,
+					"chunk_id":           i,
+				}).Errorf("failed to add input chunk: %s", err.Error())
+			}
+		}
+
+		if pl.Closed {
+			_, err := h.streams.PublishDone(ctx, req)
+			if err != nil {
+				logger.Errorf("failed to publish done: %s", err.Error())
+				return nil
+			}
 		}
 	}
 
 	return nil
-}
-
-func hex2int(hexStr string) uint64 {
-	// remove 0x suffix if found in the input string
-	cleaned := strings.Replace(hexStr, "0x", "", -1)
-
-	// base 16 for hexadecimal
-	result, _ := strconv.ParseUint(cleaned, 16, 64)
-	return uint64(result)
 }
