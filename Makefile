@@ -33,7 +33,7 @@ build-bin-hookd:
 build: build-hookd build-ingester
 
 deps:
-	env GO111MODULE=on go mod vendor
+	GO111MODULE=on go mod vendor
 
 push:
 	docker push ${HOOKD_IMAGE_TAG}
