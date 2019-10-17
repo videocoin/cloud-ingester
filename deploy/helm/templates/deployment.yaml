@@ -41,6 +41,11 @@ spec:
                 configMapKeyRef:
                   name: {{ .Chart.Name }}
                   key: streamsRpcAddr
+            - name: EMITTER_RPC_ADDR
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Chart.Name }}
+                  key: emitterRpcAddr
           {{- if .Values.resources }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}

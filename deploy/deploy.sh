@@ -50,6 +50,7 @@ function get_vars() {
     log_info "Getting variables..."
     readonly KUBE_CONTEXT=`consul kv get -http-addr=${CONSUL_ADDR} config/${ENV}/common/kube_context`
     readonly STREAMS_RPC_ADDR=`consul kv get -http-addr=${CONSUL_ADDR} config/${ENV}/services/${CHART_NAME}/vars/streamsRpcAddr`
+    readonly EMITTER_RPC_ADDR=`consul kv get -http-addr=${CONSUL_ADDR} config/${ENV}/services/${CHART_NAME}/vars/emitterRpcAddr`
 }
 
 function deploy() {
@@ -60,6 +61,7 @@ function deploy() {
         --set image.tag="${VERSION}" \
         --set hookd.image.tag="${VERSION}" \
         --set config.streamsRpcAddr="${STREAMS_RPC_ADDR}" \
+        --set config.emitterRpcAddr="${EMITTER_RPC_ADDR}" \
         --wait ${CHART_NAME} ${CHART_DIR}
 }
 
