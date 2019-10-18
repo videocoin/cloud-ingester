@@ -24,11 +24,17 @@ spec:
           ports:
             - containerPort: {{ .Values.service.http.port }}
             - containerPort: {{ .Values.service.rtmp.port }}
+          volumeMounts:
+          - name: tmp
+            mountPath: /tmp
         - name: {{ .Release.Name }}-hookd
           image: "{{ .Values.hookd.image.repository }}:{{ .Values.hookd.image.tag }}"
           imagePullPolicy: {{ .Values.hookd.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.hookd.service.http.port }}
+          volumeMounts:
+          - name: tmp
+            mountPath: /tmp
           env:
             - name: JAEGER_AGENT_HOST
               valueFrom:
@@ -57,3 +63,7 @@ spec:
         - name: secrets
           secret:
             secretName: {{ .Release.Name }}
+        - name: tmp
+          hostPath:
+            path: /tmp
+            type: Directory

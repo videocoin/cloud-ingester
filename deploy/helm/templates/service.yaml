@@ -33,3 +33,26 @@ spec:
     protocol: TCP
     port: {{ .Values.service.rtmp.port }}
     targetPort: {{ .Values.service.rtmp.port }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-rtmp-lb
+  labels:
+    app: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: LoadBalancer
+  loadBalancerIP: {{ .Values.service.loadBalancerIP }}
+  selector:
+    app: {{ .Release.Name }}
+  ports:
+  - name: rtmp
+    protocol: TCP
+    port: {{ .Values.service.rtmp.port }}
+    targetPort: {{ .Values.service.rtmp.port }}
+  - name: http
+    protocol: TCP
+    port: {{ .Values.service.http.port }}
+    targetPort: {{ .Values.service.http.port }}
