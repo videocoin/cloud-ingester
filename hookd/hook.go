@@ -62,16 +62,20 @@ func (h *Hook) handleHook(c echo.Context) error {
 		return ErrBadRequest
 	}
 
-	h.logger.Debugf("handle hook %+v", req.Form)
-
 	call := req.FormValue("call")
+
+	h.logger.Infof("hook %s", call)
+	h.logger.Infof("hook params %+v", req.Form)
+
 	switch call {
 	case "publish":
 		err = h.handlePublish(ctx, req)
-	// case "publish_done":
-	// 	err = h.handlePublishDone(ctx, req)
+	case "publish_done":
+		err = h.handlePublishDone(ctx, req)
 	case "playlist":
 		err = h.handlePlaylist(ctx, req)
+	case "update_publish":
+		err = h.handleUpdatePublish(ctx, req)
 	}
 
 	if err != nil {
@@ -237,6 +241,40 @@ func (h *Hook) handlePlaylist(ctx context.Context, r *http.Request) error {
 				return nil
 			}
 		}
+	}
+
+	return nil
+}
+
+func (h *Hook) handleUpdatePublish(ctx context.Context, r *http.Request) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "handleUpdatePublish")
+	defer span.Finish()
+
+	logger := h.logger.WithField("hook", "update")
+	logger.Info("handling hook")
+
+	streamID := r.FormValue("name")
+	if streamID == "" {
+		logger.Warningf("failed to get stream id")
+		return ErrBadRequest
+	}
+
+	span.SetTag("stream_id", streamID)
+	logger = logger.WithField("id", streamID)
+
+	req := &privatev1.StreamRequest{Id: streamID}
+	streamResp, err := h.streams.Get(ctx, req)
+	if err != nil {
+		logger.Errorf("failed to get stream: %s", err.Error())
+		return nil
+	}
+
+	logger.Infof("stream status is %s", streamResp.Status.String())
+
+	if streamResp.Status == v1.StreamStatusFailed ||
+		streamResp.Status == v1.StreamStatusCancelled ||
+		streamResp.Status == v1.StreamStatusCompleted {
+		return ErrBadRequest
 	}
 
 	return nil
