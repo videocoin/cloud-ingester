@@ -45,6 +45,7 @@ metadata:
 spec:
   type: LoadBalancer
   loadBalancerIP: {{ .Values.service.loadBalancerIP }}
+  sessionAffinity: ClientIP
   selector:
     app: {{ .Release.Name }}
   ports:

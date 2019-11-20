@@ -52,6 +52,8 @@ function get_vars() {
     readonly STREAMS_RPC_ADDR=`consul kv get -http-addr=${CONSUL_ADDR} config/${ENV}/services/${CHART_NAME}/vars/streamsRpcAddr`
     readonly EMITTER_RPC_ADDR=`consul kv get -http-addr=${CONSUL_ADDR} config/${ENV}/services/${CHART_NAME}/vars/emitterRpcAddr`
     readonly LB_IP=`consul kv get -http-addr=${CONSUL_ADDR} config/${ENV}/services/${CHART_NAME}/vars/loadBalancerIP`
+    readonly FS_PATH=`consul kv get -http-addr=${CONSUL_ADDR} config/${ENV}/services/${CHART_NAME}/vars/fsPath`
+    readonly FS_ADDR=`consul kv get -http-addr=${CONSUL_ADDR} config/${ENV}/services/${CHART_NAME}/vars/fsAddr`
 }
 
 function deploy() {
@@ -63,6 +65,8 @@ function deploy() {
         --set hookd.image.tag="${VERSION}" \
         --set config.streamsRpcAddr="${STREAMS_RPC_ADDR}" \
         --set config.emitterRpcAddr="${EMITTER_RPC_ADDR}" \
+        --set config.fsPath="${FS_PATH}" \
+        --set config.fsAddr="${FS_ADDR}" \
         --set service.loadBalancerIP="${LB_IP}" \
         --wait ${CHART_NAME} ${CHART_DIR}
 }
