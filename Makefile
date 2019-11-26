@@ -10,7 +10,7 @@ VERSION=$$(git describe --abbrev=0)-$$(git rev-parse --abbrev-ref HEAD)-$$(git r
 IMAGE_TAG=gcr.io/${GCP_PROJECT}/${NAME}:${VERSION}
 HOOKD_IMAGE_TAG=gcr.io/${GCP_PROJECT}/${NAME}-hookd:${VERSION}
 
-ENV?=snb
+ENV?=dev
 
 .PHONY: deploy
 
