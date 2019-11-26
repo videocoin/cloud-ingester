@@ -70,8 +70,8 @@ func (h *Hook) handleHook(c echo.Context) error {
 	switch call {
 	case "publish":
 		err = h.handlePublish(ctx, req)
-	case "publish_done":
-		err = h.handlePublishDone(ctx, req)
+	// case "publish_done":
+	// 	err = h.handlePublishDone(ctx, req)
 	case "playlist":
 		err = h.handlePlaylist(ctx, req)
 	case "update_publish":
@@ -234,13 +234,13 @@ func (h *Hook) handlePlaylist(ctx context.Context, r *http.Request) error {
 			}
 		}
 
-		if pl.Closed {
-			_, err := h.streams.PublishDone(ctx, req)
-			if err != nil {
-				logger.Errorf("failed to publish done: %s", err.Error())
-				return nil
-			}
-		}
+		// if pl.Closed {
+		// 	_, err := h.streams.PublishDone(ctx, req)
+		// 	if err != nil {
+		// 		logger.Errorf("failed to publish done: %s", err.Error())
+		// 		return nil
+		// 	}
+		// }
 	}
 
 	return nil
