@@ -70,8 +70,8 @@ func (h *Hook) handleHook(c echo.Context) error {
 	switch call {
 	case "publish":
 		err = h.handlePublish(ctx, req)
-	// case "publish_done":
-	// 	err = h.handlePublishDone(ctx, req)
+	case "publish_done":
+		err = h.handlePublishDone(ctx, req)
 	case "playlist":
 		err = h.handlePlaylist(ctx, req)
 	case "update_publish":
@@ -141,9 +141,9 @@ func (h *Hook) handlePublishDone(ctx context.Context, r *http.Request) error {
 	logger.Info("publishing done")
 
 	req := &privatev1.StreamRequest{Id: streamID}
-	_, err := h.streams.PublishDone(ctx, req)
+	_, err := h.streams.Stop(ctx, req)
 	if err != nil {
-		logger.Errorf("failed to publish done: %s", err.Error())
+		logger.Errorf("failed to stop stream: %s", err.Error())
 		return ErrBadRequest
 	}
 
