@@ -27,6 +27,9 @@ spec:
           volumeMounts:
             - mountPath: /data/studio
               name: {{ .Chart.Name }}-fs
+            - mountPath: /opt/stream-ingester/etc/stream-ingester-rtmp.conf
+              name: config
+              subPath: rtmpConf
         - name: {{ .Release.Name }}-hookd
           image: "{{ .Values.hookd.image.repository }}:{{ .Values.hookd.image.tag }}"
           imagePullPolicy: {{ .Values.hookd.image.pullPolicy }}
