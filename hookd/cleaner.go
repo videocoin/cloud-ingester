@@ -18,7 +18,7 @@ type Cleaner struct {
 func NewCleaner(hlsDir string, logger *logrus.Entry) (*Cleaner, error) {
 	return &Cleaner{
 		logger: logger,
-		ticker: time.NewTicker(time.Second * 5),
+		ticker: time.NewTicker(time.Second * 60),
 		hlsDir: hlsDir,
 	}, nil
 }
