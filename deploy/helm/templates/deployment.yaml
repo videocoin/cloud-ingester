@@ -55,7 +55,7 @@ spec:
                 configMapKeyRef:
                   name: {{ .Chart.Name }}
                   key: emitterRpcAddr
-            - name: HLS_DIR
+            - name: VC_HOOKD_HLSDIR
               value: /data/studio/hls
           {{- if .Values.resources }}
           resources:
