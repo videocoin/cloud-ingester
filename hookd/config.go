@@ -12,7 +12,7 @@ type Config struct {
 	Addr           string `required:"true" envconfig:"ADDR" default:"0.0.0.0:8887"`
 	StreamsRPCAddr string `required:"true" envconfig:"STREAMS_RPC_ADDR" default:"127.0.0.1:5102"`
 	EmitterRPCAddr string `required:"true" envconfig:"EMITTER_RPC_ADDR" default:"127.0.0.1:5003"`
-	HLSDir         string `required:"/tmp/hls"`
+	HLSDir         string `required:"true" default:"/tmp/hls"`
 
 	SentryDSN string        `required:"false"`
 	Logger    *logrus.Entry `ignored:"true"`
