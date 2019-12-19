@@ -55,6 +55,8 @@ spec:
                 configMapKeyRef:
                   name: {{ .Chart.Name }}
                   key: emitterRpcAddr
+            - name: HLS_DIR
+              value: /data/studio/hls
           {{- if .Values.resources }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
