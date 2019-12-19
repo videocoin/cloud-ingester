@@ -11,6 +11,7 @@ type Service struct {
 	logger     *logrus.Entry
 	cfg        *Config
 	httpServer *httpServer
+	cleaner    *Cleaner
 }
 
 func NewService(cfg *Config) (*Service, error) {
@@ -35,19 +36,28 @@ func NewService(cfg *Config) (*Service, error) {
 		return nil, err
 	}
 
+	cleaner, err := NewCleaner(cfg.HLSDir, cfg.Logger.WithField("system", "cleaner"))
+	if err != nil {
+		return nil, err
+	}
+
 	return &Service{
 		logger:     cfg.Logger,
 		cfg:        cfg,
 		httpServer: httpServer,
+		cleaner:    cleaner,
 	}, nil
 }
 
 func (s *Service) Start() error {
 	go s.httpServer.Start()
+	go s.cleaner.Start()
 	return nil
 }
 
 func (s *Service) Stop() error {
+	s.cleaner.Stop()
 	s.httpServer.Stop()
+
 	return nil
 }
