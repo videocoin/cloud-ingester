@@ -72,3 +72,5 @@ spec:
           persistentVolumeClaim:
             claimName: {{ .Chart.Name }}-fs
             readOnly: false
+      nodeSelector:
+        cloud.google.com/gke-nodepool: api
