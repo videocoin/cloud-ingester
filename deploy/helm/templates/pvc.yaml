@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ .Chart.Name }}-fs
+  name: {{ .Chart.Name }}-{{ .Values.config.env }}-fs
 spec:
   accessModes:
   - ReadWriteMany

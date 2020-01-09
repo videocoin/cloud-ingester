@@ -26,7 +26,7 @@ spec:
             - containerPort: {{ .Values.service.rtmp.port }}
           volumeMounts:
             - mountPath: /data/studio
-              name: {{ .Chart.Name }}-fs
+              name: {{ .Chart.Name }}-{{ .Values.config.env }}-fs
             - mountPath: /opt/stream-ingester/etc/stream-ingester-rtmp.conf
               name: config
               subPath: rtmpConf
@@ -37,7 +37,7 @@ spec:
             - containerPort: {{ .Values.hookd.service.http.port }}
           volumeMounts:
             - mountPath: /data/studio
-              name: {{ .Chart.Name }}-fs
+              name: {{ .Chart.Name }}-{{ .Values.config.env }}-fs
           env:
             - name: JAEGER_AGENT_HOST
               valueFrom:
@@ -68,9 +68,9 @@ spec:
         - name: secrets
           secret:
             secretName: {{ .Release.Name }}
-        - name: {{ .Chart.Name }}-fs
+        - name: {{ .Chart.Name }}-{{ .Values.config.env }}-fs
           persistentVolumeClaim:
-            claimName: {{ .Chart.Name }}-fs
+            claimName: {{ .Chart.Name }}-{{ .Values.config.env }}-fs
             readOnly: false
       nodeSelector:
         cloud.google.com/gke-nodepool: ingester

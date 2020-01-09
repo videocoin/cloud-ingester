@@ -64,6 +64,7 @@ function deploy() {
         --install \
         --set image.tag="${VERSION}" \
         --set hookd.image.tag="${VERSION}" \
+        --set config.env="${ENV}" \
         --set config.streamsRpcAddr="${STREAMS_RPC_ADDR}" \
         --set config.emitterRpcAddr="${EMITTER_RPC_ADDR}" \
         --set config.fsPath="${FS_PATH}" \
