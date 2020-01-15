@@ -88,13 +88,13 @@ github.com/valyala/bytebufferpool
 github.com/valyala/fasttemplate
 # github.com/videocoin/cloud-api v0.2.7 => ../cloud-api
 github.com/videocoin/cloud-api/emitter/v1
+github.com/videocoin/cloud-api/profiles/manager/v1
+github.com/videocoin/cloud-api/profiles/v1
 github.com/videocoin/cloud-api/rpc
 github.com/videocoin/cloud-api/streams/private/v1
 github.com/videocoin/cloud-api/streams/v1
 # github.com/videocoin/cloud-pkg v0.0.5
 github.com/videocoin/cloud-pkg/grpcutil
-# github.com/videocoin/hookd v0.0.66
-github.com/videocoin/hookd/pkg/grpcclient
 # golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
 golang.org/x/crypto/acme
 golang.org/x/crypto/acme/autocert

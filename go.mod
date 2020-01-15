@@ -15,8 +15,10 @@ require (
 	github.com/sirupsen/logrus v1.4.2
 	github.com/videocoin/cloud-api v0.2.7
 	github.com/videocoin/cloud-pkg v0.0.5
-	github.com/videocoin/hookd v0.0.66
+	github.com/videocoin/hookd v0.0.66 // indirect
 	google.golang.org/grpc v1.23.0
 )
 
 replace github.com/videocoin/cloud-api => ../cloud-api
+
+replace github.com/videocoin/cloud-pkg => ../cloud-pkg
