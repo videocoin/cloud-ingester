@@ -5,14 +5,16 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	emitterv1 "github.com/videocoin/cloud-api/emitter/v1"
-	privatev1 "github.com/videocoin/cloud-api/streams/private/v1"
-	"github.com/videocoin/hookd/pkg/grpcclient"
-	"google.golang.org/grpc"
+	profilesv1 "github.com/videocoin/cloud-api/profiles/manager/v1"
+	streamsv1 "github.com/videocoin/cloud-api/streams/private/v1"
 )
 
 type HTTPServerConfig struct {
-	Addr           string
-	StreamsRPCAddr string
+	Addr     string
+	Emitter  emitterv1.EmitterServiceClient
+	Streams  streamsv1.StreamsServiceClient
+	Profiles profilesv1.ProfileManagerServiceClient
+	Logger   *logrus.Entry
 }
 
 type httpServer struct {
@@ -24,8 +26,7 @@ type httpServer struct {
 
 func NewHTTPServer(
 	cfg *HTTPServerConfig,
-	logger *logrus.Entry,
-	emitter emitterv1.EmitterServiceClient,
+
 ) (*httpServer, error) {
 	e := echo.New()
 	e.HideBanner = true
@@ -35,14 +36,6 @@ func NewHTTPServer(
 	e.GET("/healthz", func(c echo.Context) error {
 		return c.JSON(200, map[string]string{"status": "OK"})
 	})
-
-	opts := grpcclient.DialOpts(logger)
-	conn, err := grpc.Dial(cfg.StreamsRPCAddr, opts...)
-	if err != nil {
-		return nil, err
-	}
-	streams := privatev1.NewStreamsServiceClient(conn)
-
 	hookConfig := &HookConfig{
 		Prefix: "/hook",
 	}
@@ -50,9 +43,10 @@ func NewHTTPServer(
 	hook, err := NewHook(
 		e,
 		hookConfig,
-		streams,
-		emitter,
-		logger.WithField("system", "hook"),
+		cfg.Streams,
+		cfg.Emitter,
+		cfg.Profiles,
+		cfg.Logger.WithField("system", "hook"),
 	)
 	if err != nil {
 		return nil, err
@@ -61,7 +55,7 @@ func NewHTTPServer(
 	return &httpServer{
 		cfg:    cfg,
 		e:      e,
-		logger: logger,
+		logger: cfg.Logger,
 		hook:   hook,
 	}, nil
 }

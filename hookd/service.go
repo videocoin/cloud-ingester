@@ -3,8 +3,9 @@ package hookd
 import (
 	"github.com/sirupsen/logrus"
 	emitterv1 "github.com/videocoin/cloud-api/emitter/v1"
+	profilesv1 "github.com/videocoin/cloud-api/profiles/manager/v1"
+	streamsv1 "github.com/videocoin/cloud-api/streams/private/v1"
 	"github.com/videocoin/cloud-pkg/grpcutil"
-	"google.golang.org/grpc"
 )
 
 type Service struct {
@@ -15,23 +16,32 @@ type Service struct {
 }
 
 func NewService(cfg *Config) (*Service, error) {
-	elogger := cfg.Logger.WithField("system", "emittercli")
-	eGrpcDialOpts := grpcutil.ClientDialOptsWithRetry(elogger)
-	emitterConn, err := grpc.Dial(cfg.EmitterRPCAddr, eGrpcDialOpts...)
+	conn, err := grpcutil.Connect(cfg.StreamsRPCAddr, cfg.Logger.WithField("system", "streamscli"))
 	if err != nil {
 		return nil, err
 	}
-	emitter := emitterv1.NewEmitterServiceClient(emitterConn)
+	streams := streamsv1.NewStreamsServiceClient(conn)
+
+	conn, err = grpcutil.Connect(cfg.EmitterRPCAddr, cfg.Logger.WithField("system", "emittercli"))
+	if err != nil {
+		return nil, err
+	}
+	emitter := emitterv1.NewEmitterServiceClient(conn)
+
+	conn, err = grpcutil.Connect(cfg.ProfilesRPCAddr, cfg.Logger.WithField("system", "profilescli"))
+	if err != nil {
+		return nil, err
+	}
+	profiles := profilesv1.NewProfileManagerServiceClient(conn)
 
 	httpServerCfg := &HTTPServerConfig{
-		Addr:           cfg.Addr,
-		StreamsRPCAddr: cfg.StreamsRPCAddr,
+		Addr:     cfg.Addr,
+		Streams:  streams,
+		Emitter:  emitter,
+		Profiles: profiles,
+		Logger:   cfg.Logger.WithField("system", "http-server"),
 	}
-	httpServer, err := NewHTTPServer(
-		httpServerCfg,
-		cfg.Logger.WithField("system", "http-server"),
-		emitter,
-	)
+	httpServer, err := NewHTTPServer(httpServerCfg)
 	if err != nil {
 		return nil, err
 	}

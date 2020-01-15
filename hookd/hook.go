@@ -12,6 +12,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 	emitterv1 "github.com/videocoin/cloud-api/emitter/v1"
+	profilesv1 "github.com/videocoin/cloud-api/profiles/manager/v1"
 	privatev1 "github.com/videocoin/cloud-api/streams/private/v1"
 	v1 "github.com/videocoin/cloud-api/streams/v1"
 )
@@ -31,6 +32,7 @@ type Hook struct {
 	logger        *logrus.Entry
 	streams       privatev1.StreamsServiceClient
 	emitter       emitterv1.EmitterServiceClient
+	profiles      profilesv1.ProfileManagerServiceClient
 	segmentsCount sync.Map
 }
 
@@ -39,6 +41,7 @@ func NewHook(
 	cfg *HookConfig,
 	streams privatev1.StreamsServiceClient,
 	emitter emitterv1.EmitterServiceClient,
+	profiles profilesv1.ProfileManagerServiceClient,
 	logger *logrus.Entry,
 ) (*Hook, error) {
 	hook := &Hook{
@@ -200,12 +203,15 @@ func (h *Hook) handlePlaylist(ctx context.Context, r *http.Request) error {
 			}
 		}
 
-		req := &privatev1.StreamRequest{Id: streamID}
-		streamResp, err := h.streams.Get(ctx, req)
+		streamResp, err := h.streams.Get(ctx,
+			&privatev1.StreamRequest{Id: streamID})
 		if err != nil {
 			logger.Errorf("failed to get stream: %s", err.Error())
 			return ErrBadRequest
 		}
+
+		profilesResp, err := h.profiles.Get(ctx,
+			&profilesv1.ProfileRequest{Id: streamResp.ProfileID})
 
 		actual, ok := h.segmentsCount.LoadOrStore(streamID, segmentsCount)
 		if ok {
@@ -218,6 +224,7 @@ func (h *Hook) handlePlaylist(ctx context.Context, r *http.Request) error {
 				StreamContractId: streamResp.StreamContractID,
 				ChunkId:          uint64(i),
 				ChunkDuration:    pl.Segments[i-1].Duration,
+				Reward:           profilesResp.Reward,
 			}
 
 			logger.WithFields(logrus.Fields{
