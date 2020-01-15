@@ -45,6 +45,11 @@ spec:
                   fieldPath: status.hostIP
             - name: JAEGER_AGENT_PORT
               value: "6831"
+            - name: PROFILES_RPC_ADDR
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Chart.Name }}
+                  key: profilesRpcAddr
             - name: STREAMS_RPC_ADDR
               valueFrom:
                 configMapKeyRef:
