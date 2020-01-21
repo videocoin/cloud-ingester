@@ -50,6 +50,7 @@ func NewHook(
 		logger:  logger,
 		streams: streams,
 		emitter: emitter,
+		profiles: profiles,
 	}
 	hook.e.Any(cfg.Prefix, hook.handleHook)
 	return hook, nil
@@ -212,6 +213,11 @@ func (h *Hook) handlePlaylist(ctx context.Context, r *http.Request) error {
 
 		profilesResp, err := h.profiles.Get(ctx,
 			&profilesv1.ProfileRequest{Id: streamResp.ProfileID})
+
+		if err != nil {
+			logger.Errorf("failed to get profiles: %s", err.Error())
+			return ErrBadRequest
+		}
 
 		actual, ok := h.segmentsCount.LoadOrStore(streamID, segmentsCount)
 		if ok {

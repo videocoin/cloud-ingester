@@ -28,7 +28,7 @@ func NewService(cfg *Config) (*Service, error) {
 	}
 	emitter := emitterv1.NewEmitterServiceClient(conn)
 
-	conn, err = grpcutil.Connect(cfg.ProfilesRPCAddr, cfg.Logger.WithField("system", "profilescli"))
+	conn, err = grpcutil.Connect(cfg.ProfilesManagerRPCAddr, cfg.Logger.WithField("system", "profilescli"))
 	if err != nil {
 		return nil, err
 	}
