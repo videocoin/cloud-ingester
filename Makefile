@@ -46,6 +46,6 @@ tag:
 	@echo ${HOOKD_IMAGE_TAG}
 
 deploy:
-	ENV=${ENV} deploy/deploy.sh
+	ENV=${ENV} GCP_PROJECT=${GCP_PROJECT} deploy/deploy.sh 
 
 release: build push
