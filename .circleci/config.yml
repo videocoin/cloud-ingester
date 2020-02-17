@@ -17,7 +17,7 @@ run_consul: &run_consul
 
 init_gcloud: &init_gcloud
   name: Init gcloud
-  command: .circleci/init-gcloud.sh
+  command: source .circleci/init-gcloud.sh
 
 base_docker_image: &base_docker_image
   - image: gcr.io/videocoin-network/cloud-base-ci:1.0
@@ -68,6 +68,7 @@ jobs:
       - run:
           name: deploy binary
           command: |
+            source .circleci/init.sh
             timeout -t 15 bash .circleci/wait-consul.sh
             make deploy
 workflows:
