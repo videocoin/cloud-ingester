@@ -37,6 +37,12 @@ build: build-hookd build-ingester
 deps:
 	GO111MODULE=on go mod vendor
 
+lint:
+	golangci-lint run -v
+
+docker-lint:
+	docker build -f Dockerfile.lint .
+
 push:
 	docker push ${HOOKD_IMAGE_TAG}
 	docker push ${IMAGE_TAG}
