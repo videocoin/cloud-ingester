@@ -56,5 +56,8 @@ func main() {
 		config.Logger.Info("terminating")
 	}
 
-	service.Stop()
+	err = service.Stop()
+	if err != nil {
+		logrus.Fatal(err)
+	}
 }

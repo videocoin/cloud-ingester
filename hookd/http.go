@@ -15,7 +15,7 @@ type HTTPServerConfig struct {
 	StreamsRPCAddr string
 }
 
-type httpServer struct {
+type HTTPServer struct {
 	cfg    *HTTPServerConfig
 	e      *echo.Echo
 	logger *logrus.Entry
@@ -26,7 +26,7 @@ func NewHTTPServer(
 	cfg *HTTPServerConfig,
 	logger *logrus.Entry,
 	emitter emitterv1.EmitterServiceClient,
-) (*httpServer, error) {
+) (*HTTPServer, error) {
 	e := echo.New()
 	e.HideBanner = true
 	e.HidePort = true
@@ -58,7 +58,7 @@ func NewHTTPServer(
 		return nil, err
 	}
 
-	return &httpServer{
+	return &HTTPServer{
 		cfg:    cfg,
 		e:      e,
 		logger: logger,
@@ -66,12 +66,12 @@ func NewHTTPServer(
 	}, nil
 }
 
-func (s *httpServer) Start() error {
+func (s *HTTPServer) Start() error {
 	s.logger.Infof("http server listening on %s", s.cfg.Addr)
 	return s.e.Start(s.cfg.Addr)
 }
 
-func (s *httpServer) Stop() error {
+func (s *HTTPServer) Stop() error {
 	s.logger.Infof("stopping http server")
 	return nil
 }

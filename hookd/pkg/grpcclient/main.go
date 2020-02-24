@@ -5,6 +5,7 @@ import (
 
 	grpcmiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpclogrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
+
 	// grpcretry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	grpctracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	grpcprometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
@@ -25,20 +26,20 @@ func DialOpts(log *logrus.Entry) []grpc.DialOption {
 	return []grpc.DialOption{
 		grpc.WithInsecure(),
 		grpc.WithUnaryInterceptor(
-			grpc.UnaryClientInterceptor(grpcmiddleware.ChainUnaryClient(
+			grpcmiddleware.ChainUnaryClient(
 				grpclogrus.UnaryClientInterceptor(log),
 				grpctracing.UnaryClientInterceptor(tracerOpts),
 				grpcprometheus.UnaryClientInterceptor,
 				// grpcretry.UnaryClientInterceptor(retryOpts...),
-			)),
+			),
 		),
 		grpc.WithStreamInterceptor(
-			grpc.StreamClientInterceptor(grpcmiddleware.ChainStreamClient(
+			grpcmiddleware.ChainStreamClient(
 				grpclogrus.StreamClientInterceptor(log),
 				grpctracing.StreamClientInterceptor(tracerOpts),
 				grpcprometheus.StreamClientInterceptor,
 				// grpcretry.StreamClientInterceptor(retryOpts...),
-			)),
+			),
 		),
 		grpc.WithKeepaliveParams(keepalive.ClientParameters{
 			Time:                time.Second * 5,

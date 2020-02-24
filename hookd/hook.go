@@ -113,7 +113,7 @@ func (h *Hook) handlePublish(ctx context.Context, r *http.Request) error {
 		return ErrBadRequest
 	}
 
-	streamResp, err = h.streams.Publish(ctx, req)
+	_, err = h.streams.Publish(ctx, req)
 	if err != nil {
 		logger.Errorf("failed to publish: %s", err.Error())
 		return ErrBadRequest

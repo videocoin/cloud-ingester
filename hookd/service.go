@@ -10,7 +10,7 @@ import (
 type Service struct {
 	logger     *logrus.Entry
 	cfg        *Config
-	httpServer *httpServer
+	httpServer *HTTPServer
 	cleaner    *Cleaner
 }
 
@@ -50,14 +50,19 @@ func NewService(cfg *Config) (*Service, error) {
 }
 
 func (s *Service) Start() error {
-	go s.httpServer.Start()
-	go s.cleaner.Start()
+	go s.httpServer.Start() //nolint
+	go s.cleaner.Start()    //nolint
 	return nil
 }
 
 func (s *Service) Stop() error {
-	s.cleaner.Stop()
-	s.httpServer.Stop()
-
+	err := s.cleaner.Stop()
+	if err != nil {
+		return err
+	}
+	err = s.httpServer.Stop()
+	if err != nil {
+		return err
+	}
 	return nil
 }
