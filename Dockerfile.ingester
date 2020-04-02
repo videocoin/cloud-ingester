@@ -44,9 +44,9 @@ RUN rm /tmp/build/nginx-rtmp-module/nginx-rtmp-module-${NGINX_RTMP_MODULE_VERSIO
 
 # Download FFMPEG binary
 RUN cd /tmp
-RUN wget --quiet -O /tmp/ffmpeg-04dc3b4.tbz2 https://storage.googleapis.com/liveplanet-releases/ffmpeg/master/ffmpeg-04dc3b4.tbz2
-RUN tar xjf /tmp/ffmpeg-04dc3b4.tbz2
-RUN cp ffmpeg /usr/bin/ffmpeg
+RUN wget --quiet -O /tmp/ffmpeg-release-amd64-static.tar.xz https://storage.googleapis.com/videocoin-releases/ffmeg/ffmpeg-release-amd64-static.tar.xz
+RUN tar xf /tmp/ffmpeg-release-amd64-static.tar.xz -C /tmp/
+RUN cp /tmp/ffmpeg-4.2.2-amd64-static/ffmpeg /usr/bin/ffmpeg
 # RUN cp -r lib/* /lib
 
 # Build nginx
