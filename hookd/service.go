@@ -49,10 +49,11 @@ func NewService(cfg *Config) (*Service, error) {
 	}, nil
 }
 
-func (s *Service) Start() error {
-	go s.httpServer.Start() //nolint
-	go s.cleaner.Start()    //nolint
-	return nil
+func (s *Service) Start(errCh chan error) {
+	go func() {
+		errCh <- s.httpServer.Start()
+	}()
+	go s.cleaner.Start()
 }
 
 func (s *Service) Stop() error {
