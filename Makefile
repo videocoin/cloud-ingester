@@ -30,7 +30,7 @@ build-hookd:
 build-bin-hookd:
 	@echo "==> Building..."
 	GOOS=${GOOS} GOARCH=${GOARCH} \
-	go build -ldflags="-w -s -X main.Version=${VERSION}" -o bin/hookd hookd/cmd/hookd/main.go
+	go build -mod vendor -ldflags="-w -s -X main.Version=${VERSION}" -o bin/hookd hookd/cmd/hookd/main.go
 
 build: build-hookd build-ingester
 
