@@ -24,7 +24,8 @@ func main() {
 	}
 
 	signals := make(chan os.Signal, 1)
-	done := make(chan bool, 1)
+	exit := make(chan bool, 1)
+	errCh := make(chan error, 1)
 
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 
@@ -32,28 +33,24 @@ func main() {
 		sig := <-signals
 
 		config.Logger.Infof("recieved signal %s", sig)
-		done <- true
+		exit <- true
 	}()
-
-	errCh := make(chan error, 1)
 
 	service, err := hookd.NewService(&config)
 	if err != nil {
 		config.Logger.Fatal(err)
 	}
 
-	go func() {
-		err := service.Start()
-		if err != nil {
-			errCh <- err
-		}
-	}()
+	go service.Start(errCh)
 
 	select {
+	case <-exit:
+		break
 	case err := <-errCh:
-		config.Logger.Error(err)
-	case <-done:
-		config.Logger.Info("terminating")
+		if err != nil {
+			config.Logger.Error(err)
+		}
+		break
 	}
 
 	err = service.Stop()

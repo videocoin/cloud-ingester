@@ -23,15 +23,13 @@ func NewCleaner(hlsDir string, logger *logrus.Entry) (*Cleaner, error) {
 	}, nil
 }
 
-func (c *Cleaner) Start() error {
+func (c *Cleaner) Start() {
 	for range c.ticker.C {
 		err := c.cleanup()
 		if err != nil {
 			c.logger.Errorf("failed to cleanup: %s", err)
 		}
 	}
-
-	return nil
 }
 
 func (c *Cleaner) Stop() error {
