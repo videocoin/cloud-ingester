@@ -214,33 +214,24 @@ func (h *Hook) handlePlaylist(ctx context.Context, r *http.Request) error {
 		prevSegmentsCount := actual.(int)
 
 		for i := prevSegmentsCount; i < segmentsCount; i++ {
-			achReq := &emitterv1.AddInputChunkIdRequest{
+			achReq := &emitterv1.AddInputChunkRequest{
 				StreamContractId: streamResp.StreamContractID,
 				ChunkId:          uint64(i),
-				ChunkDuration:    pl.Segments[i-1].Duration,
+				Reward:           streamResp.ProfileCost / 60 * pl.Segments[i-1].Duration,
 			}
 
-			logger.WithFields(logrus.Fields{
-				"stream_contract_id": streamResp.StreamContractID,
-				"chunk_id":           i,
-			}).Debugf("calling AddInputChunkId")
+			logger = logger.WithFields(logrus.Fields{
+				"stream_contract_id": achReq.StreamContractId,
+				"chunk_id":           achReq.ChunkId,
+				"reward":             achReq.Reward,
+			})
+			logger.Debugf("calling AddInputChunk")
 
-			_, err := h.emitter.AddInputChunkId(ctx, achReq)
+			_, err := h.emitter.AddInputChunk(ctx, achReq)
 			if err != nil {
-				logger.WithFields(logrus.Fields{
-					"stream_contract_id": streamResp.StreamContractID,
-					"chunk_id":           i,
-				}).Errorf("failed to add input chunk: %s", err.Error())
+				logger.Errorf("failed to add input chunk: %s", err.Error())
 			}
 		}
-
-		// if pl.Closed {
-		// 	_, err := h.streams.PublishDone(ctx, req)
-		// 	if err != nil {
-		// 		logger.Errorf("failed to publish done: %s", err.Error())
-		// 		return nil
-		// 	}
-		// }
 	}
 
 	return nil
