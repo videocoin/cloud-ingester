@@ -39,6 +39,10 @@ func (c *Cleaner) Stop() {
 }
 
 func (c *Cleaner) cleanup() error {
+	if _, err := os.Stat(c.hlsDir); os.IsNotExist(err) {
+		return nil
+	}
+
 	files, err := ioutil.ReadDir(c.hlsDir)
 	if err != nil {
 		return err
