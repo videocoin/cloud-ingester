@@ -56,6 +56,7 @@ function get_vars() {
     readonly FS_PATH=`consul kv get -http-addr=${CONSUL_ADDR} config/${ENV}/services/${CHART_NAME}/vars/fsPath`
     readonly FS_ADDR=`consul kv get -http-addr=${CONSUL_ADDR} config/${ENV}/services/${CHART_NAME}/vars/fsAddr`
     readonly RTMP_CONF=`consul kv get -http-addr=${CONSUL_ADDR} config/${ENV}/services/${CHART_NAME}/vars/rtmpConf`
+    readonly SENTRY_DSN=`consul kv get -http-addr=${CONSUL_ADDR} config/${ENV}/services/${CHART_NAME}/secrets/sentryDsn`
 }
 
 function deploy() {
@@ -74,6 +75,7 @@ function deploy() {
         --set config.fsAddr="${FS_ADDR}" \
         --set config.rtmpConf="${RTMP_CONF}" \
         --set service.loadBalancerIP="${LB_IP}" \
+        --set secrets.sentryDsn="${SENTRY_DSN}" \
         --wait ${CHART_NAME} ${CHART_DIR}
 }
 
