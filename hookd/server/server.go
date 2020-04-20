@@ -38,13 +38,15 @@ func NewServer(ctx context.Context, addr string, sc *clientv1.ServiceClient) (*S
 		Prefix: "/hook",
 	}
 
-	hook, err := NewHook(ctx, e, hookConfig, sc)
+	logger := ctxzap.Extract(ctx).With(zap.String("system", "server"))
+
+	hook, err := NewHook(ctxzap.ToContext(ctx, logger), e, hookConfig, sc)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Server{
-		logger: ctxzap.Extract(ctx).With(zap.String("system", "server")),
+		logger: logger,
 		addr:   addr,
 		e:      e,
 		hook:   hook,

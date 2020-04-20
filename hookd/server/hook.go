@@ -3,6 +3,7 @@ package server
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -40,7 +41,7 @@ func NewHook(ctx context.Context, e *echo.Echo, cfg *HookConfig, sc *clientv1.Se
 	hook := &Hook{
 		e:      e,
 		cfg:    cfg,
-		logger: ctxzap.Extract(ctx).With(zap.String("system", "server")),
+		logger: ctxzap.Extract(ctx),
 		sc:     sc,
 	}
 	hook.e.Any(cfg.Prefix, hook.handleHook)
@@ -53,6 +54,7 @@ func (h *Hook) handleHook(c echo.Context) error {
 
 	err := req.ParseForm()
 	if err != nil {
+		h.logger.Warn("failed to parse form", zap.Error(err))
 		return ErrBadRequest
 	}
 
@@ -75,7 +77,8 @@ func (h *Hook) handleHook(c echo.Context) error {
 	}
 
 	if err != nil {
-		return err
+		logger.Error("failed to handle hook", zap.Error(err))
+		return ErrBadRequest
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -85,17 +88,16 @@ func (h *Hook) handlePublish(ctx context.Context, r *http.Request) error {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "hook.handlePublish")
 	defer span.Finish()
 
-	logger := ctxzap.Extract(ctx)
-	logger.Info("handling hook")
-
 	streamID := r.FormValue("name")
 	if streamID == "" {
-		logger.Warn("failed to get stream id")
+		h.logger.Warn("failed to get stream id")
 		return ErrBadRequest
 	}
 
 	span.SetTag("stream_id", streamID)
-	logger = logger.With(zap.String("stream_id", streamID))
+
+	logger := h.logger.With(zap.String("stream_id", streamID))
+	logger.Info("publishing")
 
 	req := &privatev1.StreamRequest{Id: streamID}
 	streamResp, err := h.sc.Streams.Get(ctx, req)
@@ -122,18 +124,15 @@ func (h *Hook) handlePublishDone(ctx context.Context, r *http.Request) error {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "hook.handlePublishDone")
 	defer span.Finish()
 
-	logger := ctxzap.Extract(ctx)
-	logger.Info("handling hook")
-
 	streamID := r.FormValue("name")
 	if streamID == "" {
-		logger.Warn("failed to get stream id")
+		h.logger.Warn("failed to get stream id")
 		return ErrBadRequest
 	}
 
 	span.SetTag("stream_id", streamID)
-	logger = logger.With(zap.String("stream_id", streamID))
 
+	logger := h.logger.With(zap.String("stream_id", streamID))
 	logger.Info("publishing done")
 
 	req := &privatev1.StreamRequest{Id: streamID}
@@ -150,25 +149,22 @@ func (h *Hook) handlePlaylist(ctx context.Context, r *http.Request) error {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "hook.handlePlaylist")
 	defer span.Finish()
 
-	logger := ctxzap.Extract(ctx)
-	logger.Info("handling hook")
-
 	streamID := r.FormValue("name")
 	if streamID == "" {
-		logger.Warn("failed to get stream name")
+		h.logger.Warn("failed to get stream name")
 		return ErrBadRequest
 	}
 
 	path := r.FormValue("path")
 	if path == "" {
-		logger.Warn("failed to get stream path")
+		h.logger.Warn("failed to get stream path")
 		return ErrBadRequest
 	}
 
 	span.SetTag("stream_id", streamID)
 	span.SetTag("path", path)
 
-	logger = logger.With(zap.String("stream_id", streamID), zap.String("path", path))
+	logger := h.logger.With(zap.String("stream_id", streamID), zap.String("path", path))
 	logger.Info("updating playlist")
 
 	f, err := os.Open(path)
@@ -230,17 +226,15 @@ func (h *Hook) handleUpdatePublish(ctx context.Context, r *http.Request) error {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "hook.handleUpdatePublish")
 	defer span.Finish()
 
-	logger := ctxzap.Extract(ctx)
-	logger.Info("handling hook")
-
 	streamID := r.FormValue("name")
 	if streamID == "" {
-		logger.Warn("failed to get stream id")
-		return ErrBadRequest
+		return errors.New("failed to get stream id")
 	}
 
 	span.SetTag("stream_id", streamID)
-	logger = logger.With(zap.String("stream_id", streamID))
+
+	logger := h.logger.With(zap.String("stream_id", streamID))
+	logger.Info("updating publish")
 
 	req := &privatev1.StreamRequest{Id: streamID}
 	streamResp, err := h.sc.Streams.Get(ctx, req)
@@ -254,7 +248,7 @@ func (h *Hook) handleUpdatePublish(ctx context.Context, r *http.Request) error {
 	if streamResp.Status == v1.StreamStatusFailed ||
 		streamResp.Status == v1.StreamStatusCancelled ||
 		streamResp.Status == v1.StreamStatusCompleted {
-		return ErrBadRequest
+		return fmt.Errorf("stream status is %s", streamResp.Status.String())
 	}
 
 	return nil
