@@ -30,11 +30,12 @@ type HookConfig struct {
 }
 
 type Hook struct {
-	cfg           *HookConfig
-	logger        *zap.Logger
-	e             *echo.Echo
-	sc            *clientv1.ServiceClient
-	segmentsCount sync.Map
+	cfg                 *HookConfig
+	logger              *zap.Logger
+	e                   *echo.Echo
+	sc                  *clientv1.ServiceClient
+	segmentsCount       sync.Map
+	addInputChunkFailed sync.Map
 }
 
 func NewHook(ctx context.Context, e *echo.Echo, cfg *HookConfig, sc *clientv1.ServiceClient) (*Hook, error) {
@@ -52,6 +53,9 @@ func (h *Hook) handleHook(c echo.Context) error {
 	req := c.Request()
 	ctx := req.Context()
 
+	span, spanCtx := opentracing.StartSpanFromContext(ctx, "hook.handleHook")
+	defer span.Finish()
+
 	err := req.ParseForm()
 	if err != nil {
 		h.logger.Warn("failed to parse form", zap.Error(err))
@@ -65,15 +69,32 @@ func (h *Hook) handleHook(c echo.Context) error {
 	logger.Info("hook request")
 
 	call := req.FormValue("call")
+	streamID := req.FormValue("name")
+	if streamID == "" {
+		logger.Error("failed to get stream name")
+		return ErrBadRequest
+	}
+
+	span.SetTag("hook", call)
+	span.SetTag("stream_id", streamID)
+
+	logger = logger.With(
+		zap.String("stream_id", streamID),
+		zap.String("call", call),
+	)
+
+	hookCtx := ctxzap.ToContext(spanCtx, logger)
+	hookCtx = opentracing.ContextWithSpan(hookCtx, span)
+
 	switch call {
 	case "publish":
-		err = h.handlePublish(ctx, req)
+		err = h.handlePublish(hookCtx, streamID)
 	case "publish_done":
-		err = h.handlePublishDone(ctx, req)
+		err = h.handlePublishDone(hookCtx, streamID)
 	case "playlist":
-		err = h.handlePlaylist(ctx, req)
+		err = h.handlePlaylist(hookCtx, streamID, req)
 	case "update_publish":
-		err = h.handleUpdatePublish(ctx, req)
+		err = h.handleUpdatePublish(hookCtx, streamID)
 	}
 
 	if err != nil {
@@ -84,105 +105,71 @@ func (h *Hook) handleHook(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-func (h *Hook) handlePublish(ctx context.Context, r *http.Request) error {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "hook.handlePublish")
+func (h *Hook) handlePublish(ctx context.Context, streamID string) error {
+	span, spanCtx := opentracing.StartSpanFromContext(ctx, "hook.handlePublish")
 	defer span.Finish()
 
-	streamID := r.FormValue("name")
-	if streamID == "" {
-		h.logger.Warn("failed to get stream id")
-		return ErrBadRequest
-	}
-
-	span.SetTag("stream_id", streamID)
-
-	logger := h.logger.With(zap.String("stream_id", streamID))
+	logger := ctxzap.Extract(ctx)
 	logger.Info("publishing")
 
-	req := &privatev1.StreamRequest{Id: streamID}
-	streamResp, err := h.sc.Streams.Get(ctx, req)
+	stream, err := h.sc.Streams.Get(ctx, newStreamRequest(streamID))
 	if err != nil {
-		logger.Error("failed to get stream", zap.Error(err))
-		return ErrBadRequest
+		return fmt.Errorf("failed to get stream: %s", err)
 	}
 
-	if streamResp.Status != v1.StreamStatusPrepared {
-		logger.Warn("wrong stream status", zap.String("status", streamResp.Status.String()))
-		return ErrBadRequest
+	if stream.Status != v1.StreamStatusPrepared {
+		return fmt.Errorf("wrong stream status: %s", stream.Status.String())
 	}
 
-	_, err = h.sc.Streams.Publish(ctx, req)
+	_, err = h.sc.Streams.Publish(spanCtx, newStreamRequest(streamID))
 	if err != nil {
-		logger.Error("failed to publish", zap.Error(err))
-		return ErrBadRequest
+		return fmt.Errorf("failed to stream publish: %s", err)
 	}
 
 	return nil
 }
 
-func (h *Hook) handlePublishDone(ctx context.Context, r *http.Request) error {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "hook.handlePublishDone")
+func (h *Hook) handlePublishDone(ctx context.Context, streamID string) error {
+	span, spanCtx := opentracing.StartSpanFromContext(ctx, "hook.handlePublishDone")
 	defer span.Finish()
 
-	streamID := r.FormValue("name")
-	if streamID == "" {
-		h.logger.Warn("failed to get stream id")
-		return ErrBadRequest
-	}
-
-	span.SetTag("stream_id", streamID)
-
-	logger := h.logger.With(zap.String("stream_id", streamID))
+	logger := ctxzap.Extract(ctx)
 	logger.Info("publishing done")
 
-	req := &privatev1.StreamRequest{Id: streamID}
-	_, err := h.sc.Streams.Stop(ctx, req)
+	_, err := h.sc.Streams.Stop(spanCtx, newStreamRequest(streamID))
 	if err != nil {
-		logger.Error("failed to stop stream", zap.Error(err))
-		return ErrBadRequest
+		return fmt.Errorf("failed to stop stream: %s", err)
 	}
 
 	return nil
 }
 
-func (h *Hook) handlePlaylist(ctx context.Context, r *http.Request) error {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "hook.handlePlaylist")
+func (h *Hook) handlePlaylist(ctx context.Context, streamID string, r *http.Request) error {
+	span, spanCtx := opentracing.StartSpanFromContext(ctx, "hook.handlePlaylist")
 	defer span.Finish()
-
-	streamID := r.FormValue("name")
-	if streamID == "" {
-		h.logger.Warn("failed to get stream name")
-		return ErrBadRequest
-	}
 
 	path := r.FormValue("path")
 	if path == "" {
-		h.logger.Warn("failed to get stream path")
-		return ErrBadRequest
+		return errors.New("failed to get stream path")
 	}
-
-	span.SetTag("stream_id", streamID)
 	span.SetTag("path", path)
 
-	logger := h.logger.With(zap.String("stream_id", streamID), zap.String("path", path))
+	logger := ctxzap.Extract(ctx).With(zap.String("path", path))
 	logger.Info("updating playlist")
 
 	f, err := os.Open(path)
 	if err != nil {
-		logger.Error("failed to open playlist", zap.Error(err))
-		return ErrInternalServer
+		return fmt.Errorf("failed to open playlist: %s", err)
 	}
 
 	p, listType, err := m3u8.DecodeFrom(bufio.NewReader(f), true)
 	if err != nil {
-		logger.Error("failed to decode playlist", zap.Error(err))
-		return ErrInternalServer
+		return fmt.Errorf("failed to decode playlist: %s", err)
 	}
 
 	switch listType {
 	case m3u8.MASTER:
-		logger.Error("failed to playlist type")
-		return ErrInternalServer
+		return errors.New("failed to playlist type")
 	case m3u8.MEDIA:
 		pl := p.(*m3u8.MediaPlaylist)
 		segmentsCount := 0
@@ -192,11 +179,9 @@ func (h *Hook) handlePlaylist(ctx context.Context, r *http.Request) error {
 			}
 		}
 
-		req := &privatev1.StreamRequest{Id: streamID}
-		streamResp, err := h.sc.Streams.Get(ctx, req)
+		stream, err := h.sc.Streams.Get(spanCtx, newStreamRequest(streamID))
 		if err != nil {
-			logger.Error("failed to get stream", zap.Error(err))
-			return ErrBadRequest
+			return fmt.Errorf("failed to get stream: %s", err)
 		}
 
 		actual, ok := h.segmentsCount.LoadOrStore(streamID, segmentsCount)
@@ -207,14 +192,15 @@ func (h *Hook) handlePlaylist(ctx context.Context, r *http.Request) error {
 
 		for i := prevSegmentsCount; i < segmentsCount; i++ {
 			achReq := &emitterv1.AddInputChunkRequest{
-				StreamContractId: streamResp.StreamContractID,
+				StreamContractId: stream.StreamContractID,
 				ChunkId:          uint64(i),
-				Reward:           streamResp.ProfileCost / 60 * pl.Segments[i-1].Duration,
+				Reward:           stream.ProfileCost / 60 * pl.Segments[i-1].Duration,
 			}
 
-			_, err := h.sc.Emitter.AddInputChunk(ctx, achReq)
+			_, err := h.sc.Emitter.AddInputChunk(spanCtx, achReq)
 			if err != nil {
-				logger.Error("failed to add input chunk", zap.Error(err))
+				h.addInputChunkFailed.Store(streamID, uint64(i))
+				return fmt.Errorf("failed to add input chunk: %s", err)
 			}
 		}
 	}
@@ -222,34 +208,35 @@ func (h *Hook) handlePlaylist(ctx context.Context, r *http.Request) error {
 	return nil
 }
 
-func (h *Hook) handleUpdatePublish(ctx context.Context, r *http.Request) error {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "hook.handleUpdatePublish")
+func (h *Hook) handleUpdatePublish(ctx context.Context, streamID string) error {
+	span, spanCtx := opentracing.StartSpanFromContext(ctx, "hook.handleUpdatePublish")
 	defer span.Finish()
 
-	streamID := r.FormValue("name")
-	if streamID == "" {
-		return errors.New("failed to get stream id")
+	logger := ctxzap.Extract(ctx)
+	logger.Info("checking publication")
+
+	if i, ok := h.addInputChunkFailed.Load(streamID); ok {
+		if i.(uint64) > 0 {
+			return fmt.Errorf("failed to add input chunk %d", i.(uint64))
+		}
 	}
 
-	span.SetTag("stream_id", streamID)
-
-	logger := h.logger.With(zap.String("stream_id", streamID))
-	logger.Info("updating publish")
-
-	req := &privatev1.StreamRequest{Id: streamID}
-	streamResp, err := h.sc.Streams.Get(ctx, req)
+	stream, err := h.sc.Streams.Get(spanCtx, newStreamRequest(streamID))
 	if err != nil {
-		logger.Error("failed to get stream", zap.Error(err))
-		return nil
+		return fmt.Errorf("failed to get stream: %s", err)
 	}
 
-	logger.Info("stream status is", zap.String("status", streamResp.Status.String()))
+	logger.Info("stream status is", zap.String("status", stream.Status.String()))
 
-	if streamResp.Status == v1.StreamStatusFailed ||
-		streamResp.Status == v1.StreamStatusCancelled ||
-		streamResp.Status == v1.StreamStatusCompleted {
-		return fmt.Errorf("stream status is %s", streamResp.Status.String())
+	if stream.Status == v1.StreamStatusFailed ||
+		stream.Status == v1.StreamStatusCancelled ||
+		stream.Status == v1.StreamStatusCompleted {
+		return fmt.Errorf("stream status is %s", stream.Status.String())
 	}
 
 	return nil
+}
+
+func newStreamRequest(id string) *privatev1.StreamRequest {
+	return &privatev1.StreamRequest{Id: id}
 }
