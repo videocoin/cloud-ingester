@@ -14,7 +14,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/opentracing/opentracing-go"
 	clientv1 "github.com/videocoin/cloud-api/client/v1"
-	emitterv1 "github.com/videocoin/cloud-api/emitter/v1"
+	dispatcherv1 "github.com/videocoin/cloud-api/dispatcher/v1"
 	privatev1 "github.com/videocoin/cloud-api/streams/private/v1"
 	v1 "github.com/videocoin/cloud-api/streams/v1"
 	"go.uber.org/zap"
@@ -191,17 +191,23 @@ func (h *Hook) handlePlaylist(ctx context.Context, streamID string, r *http.Requ
 		prevSegmentsCount := actual.(int)
 
 		for i := prevSegmentsCount; i < segmentsCount; i++ {
-			achReq := &emitterv1.AddInputChunkRequest{
+			achReq := &dispatcherv1.AddInputChunkRequest{
 				StreamContractId: stream.StreamContractID,
 				ChunkId:          uint64(i),
 				Reward:           stream.ProfileCost / 60 * pl.Segments[i-1].Duration,
 			}
 
-			_, err := h.sc.Emitter.AddInputChunk(spanCtx, achReq)
+			achResp, err := h.sc.Dispatcher.AddInputChunk(spanCtx, achReq)
 			if err != nil {
 				h.addInputChunkFailed.Store(streamID, uint64(i))
 				return fmt.Errorf("failed to add input chunk: %s", err)
 			}
+
+			logger.Info(
+				"add input chunk succesfully",
+				zap.String("tx", achResp.Tx),
+				zap.String("status", achResp.Status.String()),
+			)
 		}
 	}
 

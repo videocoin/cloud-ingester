@@ -50,11 +50,11 @@ spec:
                 configMapKeyRef:
                   name: {{ .Chart.Name }}
                   key: streamsRpcAddr
-            - name: EMITTER_RPC_ADDR
+            - name: DISPATCHER_RPC_ADDR
               valueFrom:
                 configMapKeyRef:
                   name: {{ .Chart.Name }}
-                  key: emitterRpcAddr
+                  key: disapatcherRpcAddr
             - name: VC_HOOKD_HLSDIR
               value: /data/studio/hls
             - name: SENTRY_DSN
