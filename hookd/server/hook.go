@@ -184,6 +184,13 @@ func (h *Hook) handlePlaylist(ctx context.Context, streamID string, r *http.Requ
 			return fmt.Errorf("failed to get stream: %s", err)
 		}
 
+		if stream.Status == v1.StreamStatusFailed ||
+			stream.Status == v1.StreamStatusCancelled ||
+			stream.Status == v1.StreamStatusCompleted ||
+			stream.Status == v1.StreamStatusDeleted {
+			return nil
+		}
+
 		actual, ok := h.segmentsCount.LoadOrStore(streamID, segmentsCount)
 		if ok {
 			h.segmentsCount.Store(streamID, segmentsCount)
