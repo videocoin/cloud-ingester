@@ -98,7 +98,7 @@ func (h *Hook) handleHook(c echo.Context) error {
 	}
 
 	if err != nil {
-		logger.Error("failed to handle hook", zap.Error(err))
+		logger.Error(err.Error())
 		return ErrBadRequest
 	}
 
