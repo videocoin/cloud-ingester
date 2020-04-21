@@ -54,7 +54,7 @@ spec:
               valueFrom:
                 configMapKeyRef:
                   name: {{ .Chart.Name }}
-                  key: disapatcherRpcAddr
+                  key: dispatcherRpcAddr
             - name: VC_HOOKD_HLSDIR
               value: /data/studio/hls
             - name: SENTRY_DSN

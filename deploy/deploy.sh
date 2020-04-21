@@ -70,7 +70,7 @@ function deploy() {
         --set hookd.image.tag="${VERSION}" \
         --set config.env="${ENV}" \
         --set config.streamsRpcAddr="${STREAMS_RPC_ADDR}" \
-        --set config.disapatcherRpcAddr="${DISPATCHER_RPC_ADDR}" \
+        --set config.dispatcherRpcAddr="${DISPATCHER_RPC_ADDR}" \
         --set config.fsPath="${FS_PATH}" \
         --set config.fsAddr="${FS_ADDR}" \
         --set config.rtmpConf="${RTMP_CONF}" \
