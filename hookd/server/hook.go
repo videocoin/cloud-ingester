@@ -192,6 +192,7 @@ func (h *Hook) handlePlaylist(ctx context.Context, streamID string, r *http.Requ
 
 		for i := prevSegmentsCount; i < segmentsCount; i++ {
 			achReq := &dispatcherv1.AddInputChunkRequest{
+				StreamId:         streamID,
 				StreamContractId: stream.StreamContractID,
 				ChunkId:          uint64(i),
 				Reward:           stream.ProfileCost / 60 * pl.Segments[i-1].Duration,
