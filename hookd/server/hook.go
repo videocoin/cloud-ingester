@@ -37,6 +37,7 @@ type Hook struct {
 	sc                  *clientv1.ServiceClient
 	segmentsCount       sync.Map
 	addInputChunkFailed sync.Map
+	playlists           sync.Map
 }
 
 func NewHook(ctx context.Context, e *echo.Echo, cfg *HookConfig, sc *clientv1.ServiceClient) (*Hook, error) {
@@ -145,6 +146,70 @@ func (h *Hook) handlePublishDone(ctx context.Context, streamID string) error {
 		return fmt.Errorf("failed to stop stream: %s", err)
 	}
 
+	if path, ok := h.playlists.Load(streamID); ok {
+		plPath := path.(string)
+
+		f, err := os.Open(plPath)
+		if err != nil {
+			logger.Error("failed to open playlist", zap.Error(err))
+			return nil
+		}
+
+		p, listType, err := m3u8.DecodeFrom(bufio.NewReader(f), true)
+		if err != nil {
+			logger.Error("failed to decode playlist", zap.Error(err))
+			return nil
+		}
+
+		switch listType {
+		case m3u8.MASTER:
+			logger.Error("failed to playlist type")
+			return nil
+		case m3u8.MEDIA:
+			pl := p.(*m3u8.MediaPlaylist)
+			segmentsCount := 0
+			for _, s := range pl.Segments {
+				if s != nil {
+					segmentsCount++
+				}
+			}
+
+			if sc, ok := h.segmentsCount.Load(streamID); ok {
+				prevSegmentsCount := sc.(int)
+
+				stream, err := h.sc.Streams.Get(spanCtx, newStreamRequest(streamID))
+				if err != nil {
+					logger.Error("failed to get stream", zap.Error(err))
+					return nil
+				}
+
+				for i := prevSegmentsCount; i < segmentsCount; i++ {
+					achReq := &dispatcherv1.AddInputChunkRequest{
+						StreamId:         streamID,
+						StreamContractId: stream.StreamContractID,
+						ChunkId:          uint64(i),
+						Reward:           stream.ProfileCost / 60 * pl.Segments[i-1].Duration,
+					}
+
+					achResp, err := h.sc.Dispatcher.AddInputChunk(spanCtx, achReq)
+					if err != nil {
+						h.addInputChunkFailed.Store(streamID, uint64(i))
+						logger.Error("failed to add input chunk", zap.Error(err))
+						return nil
+					}
+
+					logger.Info(
+						"add input chunk succesfully",
+						zap.String("tx", achResp.Tx),
+						zap.String("status", achResp.Status.String()),
+					)
+
+					h.segmentsCount.Store(streamID, segmentsCount)
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -165,6 +230,8 @@ func (h *Hook) handlePlaylist(ctx context.Context, streamID string, r *http.Requ
 	if err != nil {
 		return fmt.Errorf("failed to open playlist: %s", err)
 	}
+
+	h.playlists.Store(streamID, path)
 
 	p, listType, err := m3u8.DecodeFrom(bufio.NewReader(f), true)
 	if err != nil {
