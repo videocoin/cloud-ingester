@@ -1,16 +1,13 @@
 package server
 
 import (
-	"bufio"
 	"context"
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 	"sync"
 
-	"github.com/grafov/m3u8"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"github.com/labstack/echo/v4"
 	"github.com/opentracing/opentracing-go"
@@ -131,6 +128,8 @@ func (h *Hook) handlePublish(ctx context.Context, streamID string) error {
 		return fmt.Errorf("failed to stream publish: %s", err)
 	}
 
+	h.segmentsCount.Store(streamID, uint64(0))
+
 	return nil
 }
 
@@ -146,79 +145,18 @@ func (h *Hook) handlePublishDone(ctx context.Context, streamID string) error {
 		return fmt.Errorf("failed to stop stream: %s", err)
 	}
 
-	if path, ok := h.playlists.Load(streamID); ok {
-		plPath := path.(string)
-
-		f, err := os.Open(plPath)
-		if err != nil {
-			logger.Error("failed to open playlist", zap.Error(err))
-			return nil
-		}
-
-		p, listType, err := m3u8.DecodeFrom(bufio.NewReader(f), true)
-		if err != nil {
-			logger.Error("failed to decode playlist", zap.Error(err))
-			return nil
-		}
-
-		switch listType {
-		case m3u8.MASTER:
-			logger.Error("failed to playlist type")
-			return nil
-		case m3u8.MEDIA:
-			pl := p.(*m3u8.MediaPlaylist)
-			segmentsCount := 0
-			for _, s := range pl.Segments {
-				if s != nil {
-					segmentsCount++
-				}
-			}
-
-			if sc, ok := h.segmentsCount.Load(streamID); ok {
-				prevSegmentsCount := sc.(int)
-
-				stream, err := h.sc.Streams.Get(spanCtx, newStreamRequest(streamID))
-				if err != nil {
-					logger.Error("failed to get stream", zap.Error(err))
-					return nil
-				}
-
-				for i := prevSegmentsCount; i < segmentsCount; i++ {
-					achReq := &dispatcherv1.AddInputChunkRequest{
-						StreamId:         streamID,
-						StreamContractId: stream.StreamContractID,
-						ChunkId:          uint64(i),
-						Reward:           stream.ProfileCost / 60 * pl.Segments[i-1].Duration,
-					}
-
-					logger.Info("add input chunk", zap.Int("chunk_id", i))
-
-					achResp, err := h.sc.Dispatcher.AddInputChunk(spanCtx, achReq)
-					if err != nil {
-						h.addInputChunkFailed.Store(streamID, uint64(i))
-						logger.Error("failed to add input chunk", zap.Error(err))
-						return nil
-					}
-
-					logger.Info(
-						"add input chunk succesfully",
-						zap.String("tx", achResp.Tx),
-						zap.String("status", achResp.Status.String()),
-						zap.Int("chunk_id", i),
-					)
-
-					h.segmentsCount.Store(streamID, segmentsCount)
-				}
-			}
-		}
-	}
-
 	return nil
 }
 
 func (h *Hook) handlePlaylist(ctx context.Context, streamID string, r *http.Request) error {
 	span, spanCtx := opentracing.StartSpanFromContext(ctx, "hook.handlePlaylist")
 	defer span.Finish()
+
+	chunkID := uint64(0)
+	if chid, ok := h.segmentsCount.Load(streamID); ok {
+		chunkID = chid.(uint64) + 1
+		h.segmentsCount.Store(streamID, chunkID)
+	}
 
 	path := r.FormValue("path")
 	if path == "" {
@@ -229,72 +167,49 @@ func (h *Hook) handlePlaylist(ctx context.Context, streamID string, r *http.Requ
 	logger := ctxzap.Extract(ctx).With(zap.String("path", path), zap.String("stream_id", streamID))
 	logger.Info("updating playlist")
 
-	f, err := os.Open(path)
-	if err != nil {
-		return fmt.Errorf("failed to open playlist: %s", err)
-	}
-
 	h.playlists.Store(streamID, path)
 
-	p, listType, err := m3u8.DecodeFrom(bufio.NewReader(f), true)
+	segments, err := ExtractSegments(path)
 	if err != nil {
-		return fmt.Errorf("failed to decode playlist: %s", err)
+		return err
 	}
 
-	switch listType {
-	case m3u8.MASTER:
-		return errors.New("failed to playlist type")
-	case m3u8.MEDIA:
-		pl := p.(*m3u8.MediaPlaylist)
-		segmentsCount := 0
-		for _, s := range pl.Segments {
-			if s != nil {
-				segmentsCount++
-			}
-		}
-
-		stream, err := h.sc.Streams.Get(spanCtx, newStreamRequest(streamID))
-		if err != nil {
-			return fmt.Errorf("failed to get stream: %s", err)
-		}
-
-		if stream.Status == v1.StreamStatusFailed ||
-			stream.Status == v1.StreamStatusCancelled ||
-			stream.Status == v1.StreamStatusCompleted ||
-			stream.Status == v1.StreamStatusDeleted {
-			return nil
-		}
-
-		actual, ok := h.segmentsCount.LoadOrStore(streamID, segmentsCount)
-		if ok {
-			h.segmentsCount.Store(streamID, segmentsCount)
-		}
-		prevSegmentsCount := actual.(int)
-
-		for i := prevSegmentsCount; i < segmentsCount; i++ {
-			achReq := &dispatcherv1.AddInputChunkRequest{
-				StreamId:         streamID,
-				StreamContractId: stream.StreamContractID,
-				ChunkId:          uint64(i),
-				Reward:           stream.ProfileCost / 60 * pl.Segments[i-1].Duration,
-			}
-
-			logger.Info("add input chunk", zap.Int("chunk_id", i))
-
-			achResp, err := h.sc.Dispatcher.AddInputChunk(spanCtx, achReq)
-			if err != nil {
-				h.addInputChunkFailed.Store(streamID, uint64(i))
-				return fmt.Errorf("failed to add input chunk: %s", err)
-			}
-
-			logger.Info(
-				"add input chunk succesfully",
-				zap.String("tx", achResp.Tx),
-				zap.String("status", achResp.Status.String()),
-				zap.Int("chunk_id", i),
-			)
-		}
+	if len(segments) <= 0 {
+		return errors.New("no segments")
 	}
+
+	stream, err := h.sc.Streams.Get(spanCtx, newStreamRequest(streamID))
+	if err != nil {
+		return fmt.Errorf("failed to get stream: %s", err)
+	}
+
+	if stream.Status == v1.StreamStatusFailed ||
+		stream.Status == v1.StreamStatusCancelled ||
+		stream.Status == v1.StreamStatusCompleted ||
+		stream.Status == v1.StreamStatusDeleted {
+		return nil
+	}
+
+	achReq := &dispatcherv1.AddInputChunkRequest{
+		StreamId:         streamID,
+		StreamContractId: stream.StreamContractID,
+		ChunkId:          chunkID,
+		Reward:           stream.ProfileCost / 60 * segments[chunkID-1].Duration,
+	}
+
+	logger.Info("add input chunk", zap.Uint64("chunk_id", chunkID))
+
+	achResp, err := h.sc.Dispatcher.AddInputChunk(spanCtx, achReq)
+	if err != nil {
+		h.addInputChunkFailed.Store(streamID, chunkID)
+		return fmt.Errorf("failed to add input chunk: %s", err)
+	}
+
+	logger.Info(
+		"add input chunk succesfully",
+		zap.String("tx", achResp.Tx),
+		zap.String("status", achResp.Status.String()),
+		zap.Uint64("chunk_id", chunkID))
 
 	return nil
 }
