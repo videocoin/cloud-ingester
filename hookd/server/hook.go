@@ -114,7 +114,7 @@ func (h *Hook) handlePublish(ctx context.Context, streamID string) error {
 	span, spanCtx := opentracing.StartSpanFromContext(ctx, "hook.handlePublish")
 	defer span.Finish()
 
-	logger := ctxzap.Extract(ctx)
+	logger := ctxzap.Extract(ctx).With(zap.String("stream_id", streamID))
 	logger.Info("publishing")
 
 	stream, err := h.sc.Streams.Get(ctx, newStreamRequest(streamID))
@@ -138,7 +138,7 @@ func (h *Hook) handlePublishDone(ctx context.Context, streamID string) error {
 	span, spanCtx := opentracing.StartSpanFromContext(ctx, "hook.handlePublishDone")
 	defer span.Finish()
 
-	logger := ctxzap.Extract(ctx)
+	logger := ctxzap.Extract(ctx).With(zap.String("stream_id", streamID))
 	logger.Info("publishing done")
 
 	_, err := h.sc.Streams.Stop(spanCtx, newStreamRequest(streamID))
@@ -191,6 +191,8 @@ func (h *Hook) handlePublishDone(ctx context.Context, streamID string) error {
 						Reward:           stream.ProfileCost / 60 * pl.Segments[i-1].Duration,
 					}
 
+					logger.Info("add input chunk", zap.Int("chunk_id", i))
+
 					achResp, err := h.sc.Dispatcher.AddInputChunk(spanCtx, achReq)
 					if err != nil {
 						h.addInputChunkFailed.Store(streamID, uint64(i))
@@ -202,6 +204,7 @@ func (h *Hook) handlePublishDone(ctx context.Context, streamID string) error {
 						"add input chunk succesfully",
 						zap.String("tx", achResp.Tx),
 						zap.String("status", achResp.Status.String()),
+						zap.Int("chunk_id", i),
 					)
 
 					h.segmentsCount.Store(streamID, segmentsCount)
@@ -223,7 +226,7 @@ func (h *Hook) handlePlaylist(ctx context.Context, streamID string, r *http.Requ
 	}
 	span.SetTag("path", path)
 
-	logger := ctxzap.Extract(ctx).With(zap.String("path", path))
+	logger := ctxzap.Extract(ctx).With(zap.String("path", path), zap.String("stream_id", streamID))
 	logger.Info("updating playlist")
 
 	f, err := os.Open(path)
@@ -276,6 +279,8 @@ func (h *Hook) handlePlaylist(ctx context.Context, streamID string, r *http.Requ
 				Reward:           stream.ProfileCost / 60 * pl.Segments[i-1].Duration,
 			}
 
+			logger.Info("add input chunk", zap.Int("chunk_id", i))
+
 			achResp, err := h.sc.Dispatcher.AddInputChunk(spanCtx, achReq)
 			if err != nil {
 				h.addInputChunkFailed.Store(streamID, uint64(i))
@@ -286,6 +291,7 @@ func (h *Hook) handlePlaylist(ctx context.Context, streamID string, r *http.Requ
 				"add input chunk succesfully",
 				zap.String("tx", achResp.Tx),
 				zap.String("status", achResp.Status.String()),
+				zap.Int("chunk_id", i),
 			)
 		}
 	}
@@ -297,7 +303,7 @@ func (h *Hook) handleUpdatePublish(ctx context.Context, streamID string) error {
 	span, spanCtx := opentracing.StartSpanFromContext(ctx, "hook.handleUpdatePublish")
 	defer span.Finish()
 
-	logger := ctxzap.Extract(ctx)
+	logger := ctxzap.Extract(ctx).With(zap.String("stream_id", streamID))
 	logger.Info("checking publication")
 
 	if i, ok := h.addInputChunkFailed.Load(streamID); ok {
