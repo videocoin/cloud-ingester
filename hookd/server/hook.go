@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/grafov/m3u8"
@@ -98,6 +99,9 @@ func (h *Hook) handleHook(c echo.Context) error {
 	}
 
 	if err != nil {
+		if strings.HasPrefix(err.Error(), "stream status is") {
+			return ErrBadRequest
+		}
 		logger.Error(err.Error())
 		return ErrBadRequest
 	}
