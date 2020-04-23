@@ -190,11 +190,17 @@ func (h *Hook) handlePlaylist(ctx context.Context, streamID string, r *http.Requ
 		return nil
 	}
 
+	duration := segments[chunkID-1].Duration
+	if duration == 0 {
+		logger.Warn("chunk duration is 0", zap.Uint64("chunk_id", chunkID))
+		return nil
+	}
+
 	achReq := &dispatcherv1.AddInputChunkRequest{
 		StreamId:         streamID,
 		StreamContractId: stream.StreamContractID,
 		ChunkId:          chunkID,
-		Reward:           stream.ProfileCost / 60 * segments[chunkID-1].Duration,
+		Reward:           stream.ProfileCost / 60 * duration,
 	}
 
 	logger.Info("add input chunk", zap.Uint64("chunk_id", chunkID))
