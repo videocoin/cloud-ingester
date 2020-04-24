@@ -7,19 +7,19 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
-	"go.uber.org/zap"
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
+	"github.com/sirupsen/logrus"
 )
 
 type Cleaner struct {
-	logger *zap.Logger
+	logger *logrus.Entry
 	ticker *time.Ticker
 	hlsDir string
 }
 
 func NewCleaner(ctx context.Context, hlsDir string) (*Cleaner, error) {
 	return &Cleaner{
-		logger: ctxzap.Extract(ctx).With(zap.String("system", "cleaner")),
+		logger: ctxlogrus.Extract(ctx).WithField("system", "cleaner"),
 		ticker: time.NewTicker(time.Second * 60),
 		hlsDir: hlsDir,
 	}, nil
@@ -29,7 +29,7 @@ func (c *Cleaner) Start() {
 	for range c.ticker.C {
 		err := c.cleanup()
 		if err != nil {
-			c.logger.Error("failed to cleanup", zap.Error(err))
+			c.logger.WithError(err).Error("failed to cleanup")
 		}
 	}
 }
@@ -52,10 +52,10 @@ func (c *Cleaner) cleanup() error {
 		if f.IsDir() {
 			if f.ModTime().Before(time.Now().Add(time.Hour * -12)) {
 				path := filepath.Join(c.hlsDir, f.Name())
-				c.logger.Info("removing", zap.String("path", path))
+				c.logger.WithField("path", path).Info("removing")
 				err := os.RemoveAll(path)
 				if err != nil {
-					c.logger.Error("failed to remove", zap.String("path", path))
+					c.logger.WithError(err).Error("failed to remove")
 					continue
 				}
 			}

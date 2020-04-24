@@ -6,12 +6,11 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/videocoin/cloud-ingester/hookd/service"
 	"github.com/videocoin/cloud-pkg/logger"
 	"github.com/videocoin/cloud-pkg/tracer"
-	"go.uber.org/zap"
 )
 
 var (
@@ -20,11 +19,11 @@ var (
 )
 
 func main() {
-	log := logger.NewZapLogger(ServiceName, Version)
+	log := logger.NewLogrusLogger(ServiceName, Version)
 
 	closer, err := tracer.NewTracer(ServiceName)
 	if err != nil {
-		log.Warn("failed to create tracer", zap.Error(err))
+		log.WithError(err).Warn("failed to create tracer")
 	} else {
 		defer closer.Close()
 	}
@@ -36,13 +35,13 @@ func main() {
 
 	err = envconfig.Process(ServiceName, cfg)
 	if err != nil {
-		log.Fatal("failed to process env config", zap.Error(err))
+		log.WithError(err).Fatal("failed to process env config")
 	}
 
-	ctx := ctxzap.ToContext(context.Background(), log)
+	ctx := ctxlogrus.ToContext(context.Background(), log)
 	svc, err := service.NewService(ctx, cfg)
 	if err != nil {
-		log.Fatal("failed to create service", zap.Error(err))
+		log.WithError(err).Fatal("failed to create service")
 	}
 
 	signals := make(chan os.Signal, 1)
@@ -54,7 +53,7 @@ func main() {
 	go func() {
 		sig := <-signals
 
-		log.Info("recieved signal", zap.String("signal", sig.String()))
+		log.WithField("signal", sig.String()).Info("recieved signal")
 		exit <- true
 	}()
 
@@ -66,7 +65,7 @@ func main() {
 		break
 	case err := <-errCh:
 		if err != nil {
-			log.Error("failed to start service", zap.Error(err))
+			log.WithError(err).Error("failed to start service")
 		}
 		break
 	}
@@ -74,7 +73,7 @@ func main() {
 	log.Info("stopping")
 	err = svc.Stop()
 	if err != nil {
-		log.Error("failed to stop service", zap.Error(err))
+		log.WithError(err).Error("failed to stop service")
 		return
 	}
 

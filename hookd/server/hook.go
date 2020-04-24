@@ -8,14 +8,15 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
+	grpclogrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"github.com/labstack/echo/v4"
 	"github.com/opentracing/opentracing-go"
+	"github.com/sirupsen/logrus"
 	clientv1 "github.com/videocoin/cloud-api/client/v1"
 	dispatcherv1 "github.com/videocoin/cloud-api/dispatcher/v1"
 	privatev1 "github.com/videocoin/cloud-api/streams/private/v1"
 	v1 "github.com/videocoin/cloud-api/streams/v1"
-	"go.uber.org/zap"
 )
 
 var (
@@ -29,7 +30,7 @@ type HookConfig struct {
 
 type Hook struct {
 	cfg                 *HookConfig
-	logger              *zap.Logger
+	logger              *logrus.Entry
 	e                   *echo.Echo
 	sc                  *clientv1.ServiceClient
 	segmentsCount       sync.Map
@@ -41,7 +42,7 @@ func NewHook(ctx context.Context, e *echo.Echo, cfg *HookConfig, sc *clientv1.Se
 	hook := &Hook{
 		e:      e,
 		cfg:    cfg,
-		logger: ctxzap.Extract(ctx),
+		logger: grpclogrus.Extract(ctx),
 		sc:     sc,
 	}
 	hook.e.Any(cfg.Prefix, hook.handleHook)
@@ -57,13 +58,13 @@ func (h *Hook) handleHook(c echo.Context) error {
 
 	err := req.ParseForm()
 	if err != nil {
-		h.logger.Warn("failed to parse form", zap.Error(err))
+		h.logger.WithError(err).Warn("failed to parse form")
 		return ErrBadRequest
 	}
 
 	logger := h.logger
 	for k, v := range req.Form {
-		logger = logger.With(zap.String(fmt.Sprintf("form_%s", k), v[0]))
+		logger = logger.WithField(fmt.Sprintf("form_%s", k), v[0])
 	}
 	logger.Info("hook request")
 
@@ -77,12 +78,12 @@ func (h *Hook) handleHook(c echo.Context) error {
 	span.SetTag("hook", call)
 	span.SetTag("stream_id", streamID)
 
-	logger = logger.With(
-		zap.String("stream_id", streamID),
-		zap.String("call", call),
-	)
+	logger = logger.WithFields(logrus.Fields{
+		"stream_id": streamID,
+		"call":      call,
+	})
 
-	hookCtx := ctxzap.ToContext(spanCtx, logger)
+	hookCtx := ctxlogrus.ToContext(spanCtx, logger)
 	hookCtx = opentracing.ContextWithSpan(hookCtx, span)
 
 	switch call {
@@ -111,7 +112,7 @@ func (h *Hook) handlePublish(ctx context.Context, streamID string) error {
 	span, spanCtx := opentracing.StartSpanFromContext(ctx, "hook.handlePublish")
 	defer span.Finish()
 
-	logger := ctxzap.Extract(ctx).With(zap.String("stream_id", streamID))
+	logger := grpclogrus.Extract(ctx).WithField("stream_id", streamID)
 	logger.Info("publishing")
 
 	stream, err := h.sc.Streams.Get(ctx, newStreamRequest(streamID))
@@ -137,7 +138,7 @@ func (h *Hook) handlePublishDone(ctx context.Context, streamID string) error {
 	span, spanCtx := opentracing.StartSpanFromContext(ctx, "hook.handlePublishDone")
 	defer span.Finish()
 
-	logger := ctxzap.Extract(ctx).With(zap.String("stream_id", streamID))
+	logger := grpclogrus.Extract(ctx).WithField("stream_id", streamID)
 	logger.Info("publishing done")
 
 	_, err := h.sc.Streams.Stop(spanCtx, newStreamRequest(streamID))
@@ -164,7 +165,7 @@ func (h *Hook) handlePlaylist(ctx context.Context, streamID string, r *http.Requ
 	}
 	span.SetTag("path", path)
 
-	logger := ctxzap.Extract(ctx).With(zap.String("path", path), zap.String("stream_id", streamID))
+	logger := grpclogrus.Extract(ctx).WithFields(logrus.Fields{"path": path, "stream_id": streamID})
 	logger.Info("updating playlist")
 
 	h.playlists.Store(streamID, path)
@@ -192,7 +193,7 @@ func (h *Hook) handlePlaylist(ctx context.Context, streamID string, r *http.Requ
 
 	duration := segments[chunkID-1].Duration
 	if duration == 0 {
-		logger.Warn("chunk duration is 0", zap.Uint64("chunk_id", chunkID))
+		logger.WithField("chunk_id", chunkID).Warn("chunk duration is 0")
 		return nil
 	}
 
@@ -203,7 +204,7 @@ func (h *Hook) handlePlaylist(ctx context.Context, streamID string, r *http.Requ
 		Reward:           stream.ProfileCost / 60 * duration,
 	}
 
-	logger.Info("add input chunk", zap.Uint64("chunk_id", chunkID))
+	logger.WithField("chunk_id", chunkID).Info("add input chunk")
 
 	achResp, err := h.sc.Dispatcher.AddInputChunk(spanCtx, achReq)
 	if err != nil {
@@ -211,11 +212,11 @@ func (h *Hook) handlePlaylist(ctx context.Context, streamID string, r *http.Requ
 		return fmt.Errorf("failed to add input chunk: %s", err)
 	}
 
-	logger.Info(
-		"add input chunk succesfully",
-		zap.String("tx", achResp.Tx),
-		zap.String("status", achResp.Status.String()),
-		zap.Uint64("chunk_id", chunkID))
+	logger.WithFields(logrus.Fields{
+		"tx":       achResp.Tx,
+		"status":   achResp.Status.String(),
+		"chunk_id": chunkID,
+	}).Info("add input chunk succesfully")
 
 	return nil
 }
@@ -224,7 +225,7 @@ func (h *Hook) handleUpdatePublish(ctx context.Context, streamID string) error {
 	span, spanCtx := opentracing.StartSpanFromContext(ctx, "hook.handleUpdatePublish")
 	defer span.Finish()
 
-	logger := ctxzap.Extract(ctx).With(zap.String("stream_id", streamID))
+	logger := grpclogrus.Extract(ctx).WithField("stream_id", streamID)
 	logger.Info("checking publication")
 
 	if i, ok := h.addInputChunkFailed.Load(streamID); ok {
@@ -238,7 +239,7 @@ func (h *Hook) handleUpdatePublish(ctx context.Context, streamID string) error {
 		return fmt.Errorf("failed to get stream: %s", err)
 	}
 
-	logger.Info("stream status is", zap.String("status", stream.Status.String()))
+	logger.WithField("status", stream.Status.String()).Info("stream status is")
 
 	if stream.Status == v1.StreamStatusFailed ||
 		stream.Status == v1.StreamStatusCancelled ||

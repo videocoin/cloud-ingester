@@ -3,16 +3,16 @@ package service
 import (
 	"context"
 
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
+	grpclogrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
+	"github.com/sirupsen/logrus"
 	clientv1 "github.com/videocoin/cloud-api/client/v1"
 	"github.com/videocoin/cloud-ingester/hookd/cleaner"
 	"github.com/videocoin/cloud-ingester/hookd/server"
-	"go.uber.org/zap"
 )
 
 type Service struct {
 	cfg     *Config
-	logger  *zap.Logger
+	logger  *logrus.Entry
 	srv     *server.Server
 	cleaner *cleaner.Cleaner
 }
@@ -36,7 +36,7 @@ func NewService(ctx context.Context, cfg *Config) (*Service, error) {
 
 	return &Service{
 		cfg:     cfg,
-		logger:  ctxzap.Extract(ctx),
+		logger:  grpclogrus.Extract(ctx),
 		srv:     srv,
 		cleaner: cleaner,
 	}, nil
@@ -44,7 +44,7 @@ func NewService(ctx context.Context, cfg *Config) (*Service, error) {
 
 func (s *Service) Start(errCh chan error) {
 	go func() {
-		s.logger.Info("starting server", zap.String("addr", s.cfg.Addr))
+		s.logger.WithField("addr", s.cfg.Addr).Info("starting server")
 		errCh <- s.srv.Start()
 	}()
 	go func() {

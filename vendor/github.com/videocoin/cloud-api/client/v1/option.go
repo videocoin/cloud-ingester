@@ -5,8 +5,7 @@ import (
 	"time"
 
 	grpcmiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpczap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
+	grpclogrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	grpctracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	grpcprometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/opentracing/opentracing-go"
@@ -21,7 +20,7 @@ func NewDefaultClientDialOption(ctx context.Context) []grpc.DialOption {
 			grpcmiddleware.ChainUnaryClient(
 				grpctracing.UnaryClientInterceptor(grpctracing.WithTracer(opentracing.GlobalTracer())),
 				grpcprometheus.UnaryClientInterceptor,
-				grpczap.UnaryClientInterceptor(ctxzap.Extract(ctx)),
+				grpclogrus.UnaryClientInterceptor(grpclogrus.Extract(ctx)),
 			),
 		),
 		grpc.WithKeepaliveParams(keepalive.ClientParameters{
