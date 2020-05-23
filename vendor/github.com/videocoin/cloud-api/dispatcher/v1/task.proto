@@ -24,6 +24,7 @@ enum TaskStatus {
     COMPLETED = 4 [(gogoproto.enumvalue_customname) = "TaskStatusCompleted"];
     FAILED = 5 [(gogoproto.enumvalue_customname) = "TaskStatusFailed"];
     CANCELED = 6 [(gogoproto.enumvalue_customname) = "TaskStatusCanceled"];
+    PAUSED = 7 [(gogoproto.enumvalue_customname) = "TaskStatusPaused"];
 }
 
 message TaskInput {
@@ -66,4 +67,7 @@ message Task {
     string stream_id = 13 [
         (gogoproto.customname) = "StreamID"
     ];
+    bool has_submit_proof = 14;
+    bool has_validate_proof = 15;
+    bool has_scrap_proof = 16;
 }
