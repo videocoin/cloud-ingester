@@ -17,14 +17,7 @@ option (gogoproto.goproto_registration) = true;
 option (gogoproto.messagename_all) = true;
 
 service UserService {
-    rpc Validate(ValidateUserRequest) returns (google.protobuf.Empty) {
-        option (google.api.http) = {
-            post: "/api/v1/users/validate",
-            body: "*"
-        };
-	}
-
-	rpc Create(CreateUserRequest) returns (TokenResponse) {
+    rpc Create(CreateUserRequest) returns (TokenResponse) {
         option (google.api.http) = {
             post: "/api/v1/users",
             body: "*"
@@ -56,13 +49,6 @@ service UserService {
             get: "/api/v1/user"
         };
     }
-
-	rpc Update(UpdateUserRequest) returns (UserProfile) {
-        option (google.api.http) = {
-            put: "/api/v1/users/{id}",
-            body: "*"
-        };
-	}
 
     rpc GetById(UserRequest) returns (UserProfile) {}
 
@@ -116,21 +102,6 @@ service UserService {
     rpc GetApiToken(ApiTokenRequest) returns (UserApiTokenResponse) {}
 }
 
-message ValidateUserRequest {
-    string email = 1 [
-        (gogoproto.moretags) = "validate:\"required,email\""
-    ];
-
-    string password = 2 [
-        (gogoproto.moretags) = "validate:\"secure-password\""
-    ];
-
-    string confirm_password = 3 [
-        (gogoproto.moretags) = "validate:\"confirm-password=Password\""
-    ];
-
-}
-
 message CreateUserRequest {
     string email = 1 [
         (gogoproto.moretags) = "validate:\"required,email\""
@@ -140,51 +111,13 @@ message CreateUserRequest {
         (gogoproto.moretags) = "validate:\"secure-password\""
     ];
 
-    string confirm_password = 3 [
+    string name = 3 [
+        (gogoproto.moretags) = "validate:\"min=2,max=100\""
+    ];
+
+    string confirm_password = 4 [
         (gogoproto.moretags) = "validate:\"confirm-password=Password\""
     ];
-
-    string first_name = 4 [
-        (gogoproto.moretags) = "validate:\"min=2,max=100\""
-    ];
-
-    string last_name = 5 [
-        (gogoproto.moretags) = "validate:\"min=2,max=100\""
-    ];
-
-    string country = 6 [
-        (gogoproto.moretags) = "validate:\"required\""
-    ];
-
-    string region = 7 [
-        (gogoproto.moretags) = "validate:\"required\""
-    ];
-
-    string city = 8 [
-        (gogoproto.moretags) = "validate:\"required\""
-    ];
-
-    string zip = 9 [
-        (gogoproto.moretags) = "validate:\"required\""
-    ];
-
-    string address_1 = 10 [
-        (gogoproto.moretags) = "validate:\"required\""
-    ];
-
-    string address_2 = 11 [
-        (gogoproto.moretags) = "validate:\"required\""
-    ];
-
-    UserUIRole ui_role = 12 [
-        (gogoproto.moretags) = "validate:\"required\""
-    ];
-
-}
-
-message UpdateUserRequest {
-    string id = 1;
-    UserUIRole ui_role = 2;
 }
 
 message LoginUserRequest {
