@@ -19,7 +19,7 @@ var (
 )
 
 func main() {
-	log := logger.NewLogrusLogger(ServiceName, Version)
+	log := logger.NewLogrusLogger(ServiceName, Version, nil)
 
 	closer, err := tracer.NewTracer(ServiceName)
 	if err != nil {
