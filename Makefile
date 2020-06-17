@@ -53,4 +53,4 @@ tag:
 release: build push
 
 deploy:
-	cd deploy && helm upgrade -i --wait --set image.tag="${VERSION}" -n console ingester ./helm
+	cd deploy && helm upgrade -i --wait --set image.tag="${VERSION}" --set hookd.image.tag="${VERSION}" -n console ingester ./helm

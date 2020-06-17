@@ -16,28 +16,39 @@ spec:
       name: {{ .Release.Name }}
       labels:
         app: {{ .Release.Name }}
+    {{- with .Values.annotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
     spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      automountServiceAccountToken: true
       containers:
         - name: {{ .Release.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
-            - containerPort: {{ .Values.service.http.port }}
-            - containerPort: {{ .Values.service.rtmp.port }}
+            - containerPort: {{ .Values.service.ports.http }}
+            - containerPort: {{ .Values.service.ports.rtmp }}
           volumeMounts:
             - mountPath: /data/studio
-              name: {{ .Chart.Name }}-{{ .Values.config.env }}-fs
+              name: {{ .Chart.Name }}-fs
             - mountPath: /opt/stream-ingester/etc/stream-ingester-rtmp.conf
               name: config
               subPath: rtmpConf
         - name: {{ .Release.Name }}-hookd
           image: "{{ .Values.hookd.image.repository }}:{{ .Values.hookd.image.tag }}"
           imagePullPolicy: {{ .Values.hookd.image.pullPolicy }}
+          command: ["bash", "-c", "source /vault/secrets/common && source /vault/secrets/config && /hookd"]
           ports:
-            - containerPort: {{ .Values.hookd.service.http.port }}
+            - containerPort: {{ .Values.hookd.service.ports.http }}
           volumeMounts:
             - mountPath: /data/studio
-              name: {{ .Chart.Name }}-{{ .Values.config.env }}-fs
+              name: {{ .Chart.Name }}-fs
           env:
             - name: JAEGER_AGENT_HOST
               valueFrom:
@@ -45,23 +56,9 @@ spec:
                   fieldPath: status.hostIP
             - name: JAEGER_AGENT_PORT
               value: "6831"
-            - name: STREAMS_RPC_ADDR
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ .Chart.Name }}
-                  key: streamsRpcAddr
-            - name: DISPATCHER_RPC_ADDR
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ .Chart.Name }}
-                  key: dispatcherRpcAddr
-            - name: VC_HOOKD_HLSDIR
-              value: /data/studio/hls
-            - name: SENTRY_DSN
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Chart.Name }}
-                  key: sentryDsn
+          envFrom:
+            - configMapRef:
+                name: {{ .Release.Name }}-env
           {{- if .Values.resources }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
@@ -70,12 +67,14 @@ spec:
         - name: config
           configMap:
             name: {{ .Release.Name }}
-        - name: secrets
-          secret:
-            secretName: {{ .Release.Name }}
-        - name: {{ .Chart.Name }}-{{ .Values.config.env }}-fs
+        - name: config-env
+          configMap:
+            name: {{ .Release.Name }}-env
+        - name: {{ .Chart.Name }}-fs
           persistentVolumeClaim:
-            claimName: {{ .Chart.Name }}-{{ .Values.config.env }}-fs
+            claimName: {{ .Chart.Name }}-fs
             readOnly: false
+    {{- with .Values.nodeSelector }}
       nodeSelector:
-        cloud.google.com/gke-nodepool: ingester
+        {{- toYaml . | nindent 8 }}
+    {{- end }}

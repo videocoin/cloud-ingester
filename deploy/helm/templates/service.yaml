@@ -9,12 +9,11 @@ metadata:
 spec:
   selector:
     app: {{ .Release.Name }}
-  type: {{ .Values.service.http.type }}
   ports:
   - name: http
     protocol: TCP
-    port: {{ .Values.service.http.port }}
-    targetPort: {{ .Values.service.http.port }}
+    port: {{ .Values.service.ports.http }}
+    targetPort: {{ .Values.service.ports.http }}
 ---
 apiVersion: v1
 kind: Service
@@ -31,13 +30,13 @@ spec:
   ports:
   - name: rtmp
     protocol: TCP
-    port: {{ .Values.service.rtmp.port }}
-    targetPort: {{ .Values.service.rtmp.port }}
+    port: {{ .Values.service.ports.rtmp }}
+    targetPort: {{ .Values.service.ports.rtmp }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Release.Name }}-rtmp-lb
+  name: {{ .Release.Name }}-lb
   labels:
     app: {{ .Release.Name }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
@@ -51,9 +50,9 @@ spec:
   ports:
   - name: rtmp
     protocol: TCP
-    port: {{ .Values.service.rtmp.port }}
-    targetPort: {{ .Values.service.rtmp.port }}
+    port: {{ .Values.service.ports.rtmp }}
+    targetPort: {{ .Values.service.ports.rtmp }}
   - name: http
     protocol: TCP
-    port: {{ .Values.service.http.port }}
-    targetPort: {{ .Values.service.http.port }}
+    port: {{ .Values.service.ports.http }}
+    targetPort: {{ .Values.service.ports.http }}

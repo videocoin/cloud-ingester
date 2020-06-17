@@ -9,3 +9,15 @@ metadata:
     heritage: {{ .Release.Service }}
 data:
 {{ toYaml .Values.config | indent 2 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-env
+  labels:
+    app: {{ .Release.Name }}
+    component: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    heritage: {{ .Release.Service }}
+data:
+{{ toYaml .Values.configEnv | indent 2 }}

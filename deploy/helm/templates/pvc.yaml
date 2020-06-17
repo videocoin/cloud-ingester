@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ .Chart.Name }}-{{ .Values.config.env }}-fs
+  name: {{ .Chart.Name }}-fs
 spec:
   accessModes:
   - ReadWriteMany
-  storageClassName: ""
+  storageClassName: "nfs-client"
   resources:
     requests:
       storage: 1T
