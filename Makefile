@@ -1,16 +1,16 @@
 
 GOOS?=linux
 GOARCH?=amd64
-
-GCP_PROJECT=videocoin-network
+ENV?=dev
 
 NAME=ingester
-VERSION=$$(git describe --abbrev=0)-$$(git rev-parse --abbrev-ref HEAD)-$$(git rev-parse --short HEAD)
+VERSION?=$$(git describe --abbrev=0)-$$(git rev-parse --abbrev-ref HEAD)-$$(git rev-parse --short HEAD)
 
-IMAGE_TAG=gcr.io/${GCP_PROJECT}/${NAME}:${VERSION}
-HOOKD_IMAGE_TAG=gcr.io/${GCP_PROJECT}/${NAME}-hookd:${VERSION}
+REGISTRY_SERVER?=registry.videocoin.net
+REGISTRY_PROJECT?=cloud
 
-ENV?=dev
+IMAGE_TAG=${REGISTRY_SERVER}/${REGISTRY_PROJECT}/${NAME}:${VERSION}
+HOOKD_IMAGE_TAG=${REGISTRY_SERVER}/${REGISTRY_PROJECT}/${NAME}-hookd:${VERSION}
 
 .PHONY: deploy
 
@@ -50,7 +50,7 @@ tag:
 	@echo ${IMAGE_TAG}
 	@echo ${HOOKD_IMAGE_TAG}
 
-deploy:
-	ENV=${ENV} GCP_PROJECT=${GCP_PROJECT} deploy/deploy.sh 
-
 release: build push
+
+deploy:
+	cd deploy && helm upgrade -i --wait --set image.tag="${VERSION}" -n console ingester ./helm
