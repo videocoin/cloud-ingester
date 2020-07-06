@@ -47,15 +47,39 @@ configEnv:
   DISPATCHER_RPC_ADDR: "dispatcher.console.svc.cluster.local:5008" 
   STREAMS_RPC_ADDR: "streams.console.svc.cluster.local:5102"
 
-ingress:
-  enabled: false
-  host: rtmp.dev.videocoinapis.com
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-dns-prod
-    kubernetes.io/ingress.class: nginx
-  secret: tls-cert-console-ingress
-
 config:
+  httpConf: |
+    user www-data;
+
+    worker_processes 4;
+
+    events {
+        worker_connections 1024;
+    }
+
+    http {
+        resolver 127.0.0.1:53 valid=10s ipv6=off;
+        resolver_timeout 5s;
+
+        error_log /var/log/stream-ingester/http.error.log warn;
+        access_log /var/log/stream-ingester/http.access.log combined;
+
+        server {
+            listen *:80;
+            server_name localhost;
+
+            listen 443 ssl default_server;
+            listen [::]:443 ssl default_server;
+            include includes/ssl.conf;
+            include includes/ssl-params.conf;
+
+            location ~ /.well-known {
+                    allow all;
+            }
+
+            include includes/storage.conf;
+        }
+    }
   rtmpConf: |
     user www-data;
 

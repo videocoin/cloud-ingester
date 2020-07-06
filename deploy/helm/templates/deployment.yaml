@@ -28,11 +28,10 @@ spec:
       serviceAccountName: {{ .Values.serviceAccount.name }}
       automountServiceAccountToken: true
       containers:
-        - name: {{ .Release.Name }}
+        - name: {{ .Release.Name }}-rtmp
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
-            - containerPort: {{ .Values.service.ports.http }}
             - containerPort: {{ .Values.service.ports.rtmp }}
           volumeMounts:
             - mountPath: /data/studio
@@ -40,6 +39,18 @@ spec:
             - mountPath: /opt/stream-ingester/etc/stream-ingester-rtmp.conf
               name: config
               subPath: rtmpConf
+        - name: {{ .Release.Name }}-http
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          args: ["-c", "/opt/stream-ingester/etc/stream-ingester-http.conf", "-g", "daemon off;"]
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.ports.http }}
+          volumeMounts:
+            - mountPath: /data/studio
+              name: {{ .Chart.Name }}-fs
+            - mountPath: /opt/stream-ingester/etc/stream-ingester-http.conf
+              name: config
+              subPath: httpConf
         - name: {{ .Release.Name }}-hookd
           image: "{{ .Values.hookd.image.repository }}:{{ .Values.hookd.image.tag }}"
           imagePullPolicy: {{ .Values.hookd.image.pullPolicy }}
