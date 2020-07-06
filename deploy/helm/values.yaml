@@ -45,7 +45,7 @@ autoscaler:
 configEnv:
   VC_HOOKD_HLSDIR: "/data/studio/hls"
   DISPATCHER_RPC_ADDR: "dispatcher.console.svc.cluster.local:5008" 
-  STREAMS_RPC_ADDR: "streams:console.svc.cluster.local:5102"
+  STREAMS_RPC_ADDR: "streams.console.svc.cluster.local:5102"
 
 ingress:
   enabled: false
